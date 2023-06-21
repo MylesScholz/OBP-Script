@@ -10,11 +10,8 @@ import sys
 import time
 import requests
 
-# Project names to pull data from
-PROJECTNAME = "oregon-bee-atlas-plant-images-sampleid"
-PROJECTNAMEOUTSIDE = "master-melittologist-outside-of-oregon"
 # Attributes to be included in the .csv file
-OBSERVATIONATTRIBUES = [
+OBSERVATIONATTRIBUTES = [
     "id",
     "observed_on",
     "time_observed_at",
@@ -213,15 +210,10 @@ def get_value_from_ofvs(name, ofvs):
     return ""
 
 
-def get_observations(outside, year):
+def get_observations(source, year):
     """
-    Get all observations, project pulled from depends on outside value for values outside Oregon, and year minimum can be specified
+    Get all observations, project pulled from depends on source value (the project ID), and year minimum can be specified
     """
-
-    # Set to outside Oregon project if requested
-    projectId = PROJECTNAME
-    if outside:
-        projectId = PROJECTNAMEOUTSIDE
 
     currentDate = datetime.datetime.now()
     currentYear = str(currentDate.year)
@@ -233,7 +225,7 @@ def get_observations(outside, year):
 
     # Get observations from first of the year to current date
     observationsDict = pyinaturalist.v1.observations.get_observations(
-        d1=minPullDate, project_id=projectId, per_page=200
+        d1=minPullDate, project_id=source, per_page=200
     )
 
     # Only 200 are returned at a time, if the total is more, we need to call the API again
@@ -247,7 +239,7 @@ def get_observations(outside, year):
             observationsDict["results"] = (
                 observationsDict["results"]
                 + pyinaturalist.v1.observations.get_observations(
-                    d1=minPullDate, project_id=projectId, per_page=200, page=i
+                    d1=minPullDate, project_id=source, per_page=200, page=i
                 )["results"]
             )
     return observationsDict
@@ -315,17 +307,18 @@ def write_observations(dict, fileName):
     write_to_place_file(knownPlaces)
 
 
-def prepare_data_file(outside):
+def prepare_data_file(source):
     """
     Ensure folders are in place, and create a .csv file with header values to write to
     """
 
     # Create folder name
+    # Extract calendar date from full datetime string
     currentDate = str(datetime.datetime.now())[:10]
     folderName = currentDate.replace("-", "_")
+    # Put 2-digit year at end (MM_DD_YY)
     folderName = folderName[5:] + "_" + folderName[2:4]
-    if outside:
-        folderName = "o_" + folderName
+    folderName = source + "_" + folderName
 
     # Check for data folder
     if not os.path.isdir("./data"):
@@ -344,7 +337,7 @@ def prepare_data_file(outside):
 
 def write_to_csv(observation, fileName):
     """
-    Write an observation to a .csv file
+    Write an observation to a .csv file from an Observation object
     """
     file = open(fileName, "a")
     writer = csv.writer(file, delimiter=",", lineterminator="\n")
@@ -428,14 +421,14 @@ def write_header_to_csv(fileName):
     """
     file = open(fileName, "w")
     writer = csv.writer(file, delimiter=",", lineterminator="\n")
-    writer.writerow(OBSERVATIONATTRIBUES)
+    writer.writerow(OBSERVATIONATTRIBUTES)
     file.close()
 
 
 def main():
     args = parse_cmd_line()
     dict = get_observations(int(args["source"]), args["year"])
-    fileName = prepare_data_file(int(args["source"]))
+    fileName = prepare_data_file(args["source"])
     write_observations(dict, fileName)
     # format_data.py script expects the file path to begin with 'data', not './data'
     sys.stdout.writelines(fileName[2:])
