@@ -1,0 +1,2 @@
+Install "openpyxl" to read in xlsx files
+  - pip install openpyxl
