@@ -11,3 +11,28 @@ ERROR - on Thu Dec  8 12:15:01 PST 2022 when formatting Oregon observations
 ERROR - on Mon Dec 12 13:02:01 PST 2022 when formatting Oregon observations
 ERROR - on Thu Dec 29 09:29:01 PST 2022 when formatting Oregon observations
 SUCCESS - Pulled and formatted data on Thu Jan  5 09:29:01 PST 2023
+ERROR -  - on Mon 19 Jun 2023 02:24:31 PM PDT when retreiving Oregon observations
+ERROR -  - on Mon 19 Jun 2023 03:04:26 PM PDT when retreiving Oregon observations
+ERROR -  - on Mon 19 Jun 2023 03:05:50 PM PDT when retreiving Oregon observations
+ERROR -  - on Mon 19 Jun 2023 03:24:11 PM PDT when retreiving Oregon observations
+ERROR -  - on Mon 19 Jun 2023 03:25:04 PM PDT when retreiving Oregon observations
+ERROR -  - on Mon 19 Jun 2023 03:30:39 PM PDT when retreiving Oregon observations
+ERROR -  - on Mon 19 Jun 2023 03:31:34 PM PDT when retreiving Oregon observations
+ERROR -  - on Mon 19 Jun 2023 03:34:23 PM PDT when retreiving Oregon observations
+ERROR -  - on Mon 19 Jun 2023 03:34:53 PM PDT when retreiving Oregon observations
+ERROR -  - on Mon 19 Jun 2023 03:37:32 PM PDT when retreiving Oregon observations
+ERROR -  - on Mon 19 Jun 2023 03:40:33 PM PDT when retreiving Oregon observations
+ERROR -  - on Mon 19 Jun 2023 03:45:27 PM PDT when retreiving Oregon observations
+ERROR -  - on Mon 19 Jun 2023 03:49:52 PM PDT when retreiving Oregon observations
+ERROR -  - on Mon 19 Jun 2023 03:59:55 PM PDT when retreiving Oregon observations
+ERROR -  - on Mon 19 Jun 2023 04:00:16 PM PDT when retreiving Oregon observations
+ERROR -  - on Mon 19 Jun 2023 04:03:11 PM PDT when retreiving Oregon observations
+ERROR -  - on Mon 19 Jun 2023 04:04:17 PM PDT when retreiving Oregon observations
+ERROR -  - on Mon 19 Jun 2023 04:05:54 PM PDT when retreiving Oregon observations
+ERROR -  - on Mon 19 Jun 2023 04:08:03 PM PDT when retreiving Oregon observations
+ERROR -  - on Mon 19 Jun 2023 04:08:33 PM PDT when retreiving Oregon observations
+ERROR -  - on Mon 19 Jun 2023 04:08:49 PM PDT when retreiving Oregon observations
+ERROR -  - on Mon 19 Jun 2023 04:09:01 PM PDT when retreiving Oregon observations
+ERROR -  - on Mon 19 Jun 2023 04:13:37 PM PDT when retreiving Oregon observations
+ERROR - on Mon 19 Jun 2023 04:14:11 PM PDT when formatting Oregon observations
+SUCCESS - Pulled and formatted data on Mon 19 Jun 2023 04:16:12 PM PDT
