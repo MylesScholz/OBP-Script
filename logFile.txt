@@ -60,3 +60,4 @@ ERROR - on Wed 21 Jun 2023 11:31:13 AM PDT when formatting 'Oregon Bee Atlas (Pl
 ERROR - on Wed 21 Jun 2023 11:31:35 AM PDT when formatting 'Oregon Bee Atlas (Plant Images/SampleID)' observations
 SUCCESS - Pulled and formatted data on Wed 21 Jun 2023 11:32:00 AM PDT
 SUCCESS - Pulled and formatted data on Wed 21 Jun 2023 02:45:47 PM PDT
+SUCCESS - Pulled and formatted data on Wed 21 Jun 2023 03:15:16 PM PDT
