@@ -2,3 +2,4 @@
 c:
 cd /d %~dp0
 bash -c "./iNaturalist_Process.bash"
+pause

@@ -375,27 +375,37 @@ def write_to_csv(observation, fileName):
 
 def parse_cmd_line():
     """
-    Parse command line arguments, checking for values on --outside and --year
+    Parse command line arguments, checking for values on --source and --year
     """
 
-    outside = "0"
+    source = 0
     year = ""
     yearArg = False
     i = 0
 
+    # Check for source argument
+    if "--source" not in sys.argv:
+        print("ERROR: --source argument not set")
+        exit(1)
+
     # Retrieve arguments
     for arg in sys.argv:
-        if arg == "--outside":
+        if arg == "--source":
             if i + 1 >= len(sys.argv):
-                print("ERROR: --outside argument not set")
+                print("ERROR: --source argument not set")
                 exit(1)
-            outside = sys.argv[i + 1]
+            source = sys.argv[i + 1]
         elif arg == "--year":
             # No year value is treated as current year wanted
             if not (i + 1 >= len(sys.argv)):
                 yearArg = True
                 year = sys.argv[i + 1]
         i += 1
+
+    # Ensure source is in correct format
+    if not source.isnumeric():
+        print("ERROR: Invalid source argument, must be a number")
+        exit(1)
 
     # Ensure year is in correct format
     if yearArg:
@@ -409,12 +419,7 @@ def parse_cmd_line():
             )
             exit(1)
 
-    # Ensure outside is in correct format
-    if not outside.isnumeric() or (int(outside) != 0 and int(outside) != 1):
-        print("ERROR: Invalid outside argument, must be 0 or 1")
-        exit(1)
-
-    return {"year": year, "outside": outside}
+    return {"year": year, "source": source}
 
 
 def write_header_to_csv(fileName):
@@ -429,8 +434,8 @@ def write_header_to_csv(fileName):
 
 def main():
     args = parse_cmd_line()
-    dict = get_observations(int(args["outside"]), args["year"])
-    fileName = prepare_data_file(int(args["outside"]))
+    dict = get_observations(int(args["source"]), args["year"])
+    fileName = prepare_data_file(int(args["source"]))
     write_observations(dict, fileName)
     # format_data.py script expects the file path to begin with 'data', not './data'
     sys.stdout.writelines(fileName[2:])

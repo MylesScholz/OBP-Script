@@ -36,3 +36,26 @@ ERROR -  - on Mon 19 Jun 2023 04:09:01 PM PDT when retreiving Oregon observation
 ERROR -  - on Mon 19 Jun 2023 04:13:37 PM PDT when retreiving Oregon observations
 ERROR - on Mon 19 Jun 2023 04:14:11 PM PDT when formatting Oregon observations
 SUCCESS - Pulled and formatted data on Mon 19 Jun 2023 04:16:12 PM PDT
+SUCCESS - Pulled and formatted data on Wed 21 Jun 2023 11:04:06 AM PDT
+SUCCESS - Pulled and formatted data on Wed 21 Jun 2023 11:04:19 AM PDT
+SUCCESS - Pulled and formatted data on Wed 21 Jun 2023 11:05:26 AM PDT
+SUCCESS - Pulled and formatted data on Wed 21 Jun 2023 11:06:42 AM PDT
+SUCCESS - Pulled and formatted data on Wed 21 Jun 2023 11:08:26 AM PDT
+SUCCESS - Pulled and formatted data on Wed 21 Jun 2023 11:13:40 AM PDT
+SUCCESS - Pulled and formatted data on Wed 21 Jun 2023 11:15:57 AM PDT
+SUCCESS - Pulled and formatted data on Wed 21 Jun 2023 11:16:20 AM PDT
+SUCCESS - Pulled and formatted data on Wed 21 Jun 2023 11:16:32 AM PDT
+SUCCESS - Pulled and formatted data on Wed 21 Jun 2023 11:17:46 AM PDT
+ERROR - on Wed 21 Jun 2023 11:19:31 AM PDT when formatting '0' observations
+ERROR - on Wed 21 Jun 2023 11:19:57 AM PDT when formatting '0' observations
+ERROR - on Wed 21 Jun 2023 11:20:24 AM PDT when formatting '0' observations
+ERROR - on Wed 21 Jun 2023 11:22:17 AM PDT when formatting '0' observations
+ERROR - on Wed 21 Jun 2023 11:22:54 AM PDT when formatting 'oregon-bee-atlas-plant-images-sampleid' observations
+ERROR - on Wed 21 Jun 2023 11:23:23 AM PDT when formatting 'oregon-bee-atlas-plant-images-sampleid' observations
+SUCCESS - Pulled and formatted data on Wed 21 Jun 2023 11:24:57 AM PDT
+SUCCESS - Pulled and formatted data on Wed 21 Jun 2023 11:25:21 AM PDT
+SUCCESS - Pulled and formatted data on Wed 21 Jun 2023 11:25:41 AM PDT
+ERROR - on Wed 21 Jun 2023 11:26:04 AM PDT when formatting 'Oregon Bee Atlas' observations
+ERROR - on Wed 21 Jun 2023 11:31:13 AM PDT when formatting 'Oregon Bee Atlas (Plant Images/SampleID)' observations
+ERROR - on Wed 21 Jun 2023 11:31:35 AM PDT when formatting 'Oregon Bee Atlas (Plant Images/SampleID)' observations
+SUCCESS - Pulled and formatted data on Wed 21 Jun 2023 11:32:00 AM PDT

@@ -3,17 +3,21 @@
 #Arguments are:
 # '--year' - Must be less than current year; format YYYY; retrieve observations from 01/01/year to current date; if not specified defaults to current year
 
-outside="0";
+# outside="0";
 year="";
 totalArgs=$#;
 currentDate=`date`
 
-#List of sources to pull data from. These are the URL slugs from iNaturalist.org.
-#E.g., Oregon Bee Atlas URL: https://www.inaturalist.org/projects/oregon-bee-atlas-plant-images-sampleid
-#Oregon Bee Atlas URL slug: oregon-bee-atlas-plant-images-sampleid
-sources=("oregon-bee-atlas-plant-images-sampleid" "master-melittologist-outside-of-oregon");
+#Dictionary of sources to pull data from.
+#Keys: project titles
+#Values: project IDs
+#Project IDs can be found from https://www.inaturalist.org/observations/identify
+declare -A sources=(
+    ["Oregon Bee Atlas (Plant Images/SampleID)"]=18521
+    ["Master Melittologist (outside of Oregon)"]=99706
+);
 
-#Parse cmd line arguments
+#Parse command line arguments
 i=1;
 while [ $i -le $((totalArgs - 1)) ]
 do
@@ -26,12 +30,12 @@ do
     ((i++));
 done
 
-for source in "${sources}"; do
+for source in "${!sources[@]}"; do
 
     echo "Retrieving '$source' observations..."
 
     #Run retrieval script for source; return on success will be the filepath for format_data.py's input
-    result=$(python iNaturalist_DataPull.py --source $source --year $year)
+    result=$(python iNaturalist_DataPull.py --source ${sources[$source]} --year $year)
     #Print error if there was one
     if [ $? != 0 ]; then
         echo "$result"
