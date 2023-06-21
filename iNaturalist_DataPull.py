@@ -12,7 +12,7 @@ import requests
 
 # Project names to pull data from
 PROJECTNAME = "oregon-bee-atlas-plant-images-sampleid"
-PROJECTNAMEOUSIDE = "master-melittologist-outside-of-oregon"
+PROJECTNAMEOUTSIDE = "master-melittologist-outside-of-oregon"
 # Attributes to be included in the .csv file
 OBSERVATIONATTRIBUES = [
     "id",
@@ -85,10 +85,10 @@ class Observation:
 
         self.scientific_name = d["taxon"]["name"]
 
-        # Search through observation idenifications for family taxon
+        # Search through observation identifications for family taxon
         if d["identifications"] is not None and len(d["identifications"]) > 0:
             for id in d["identifications"]:
-                # check if observation is a family
+                # Check if observation is a family
                 if id["taxon"]["rank"] == "family":
                     self.taxon_family_name = id["taxon"]["name"]
                 else:
@@ -195,7 +195,7 @@ def read_place_file():
 
 def get_family_name(ancestors):
     """
-    Search ancestors for one ranked as a family and reurn its name
+    Search ancestors for one ranked as a family and return its name
     """
     for anc in ancestors:
         if anc["rank"] == "family":
@@ -205,7 +205,7 @@ def get_family_name(ancestors):
 
 def get_value_from_ofvs(name, ofvs):
     """
-    Search observation fields for one matching the name, and reurn its value
+    Search observation fields for one matching the name, and return its value
     """
     for o in ofvs:
         if o["name"] == name:
@@ -215,13 +215,13 @@ def get_value_from_ofvs(name, ofvs):
 
 def get_observations(outside, year):
     """
-    Get all observations, project pulled from depends on outside value for values outside oregon, and year minimum can be specified
+    Get all observations, project pulled from depends on outside value for values outside Oregon, and year minimum can be specified
     """
 
     # Set to outside Oregon project if requested
     projectId = PROJECTNAME
     if outside:
-        projectId = PROJECTNAMEOUSIDE
+        projectId = PROJECTNAMEOUTSIDE
 
     currentDate = datetime.datetime.now()
     currentYear = str(currentDate.year)
@@ -243,7 +243,7 @@ def get_observations(outside, year):
             i = i + 1
             # API has a limit of 100/minute. Since we don't care how long this script takes to run, wait so we don't hit that limit
             time.sleep(1)
-            # Get next 200 enries and append them to results
+            # Get next 200 entries and append them to results
             observationsDict["results"] = (
                 observationsDict["results"]
                 + pyinaturalist.v1.observations.get_observations(
@@ -291,7 +291,7 @@ def write_observations(dict, fileName):
     """
     knownPlaces = read_place_file()
     i = len(dict["results"])
-    # iterate over each observation
+    # Iterate over each observation
     while i > 0:
         i = i - 1
         obv = dict["results"][i]
@@ -308,7 +308,7 @@ def write_observations(dict, fileName):
         o.place_state_name = places[1]
         o.place_county_name = places[2]
 
-        # Write the observation to .csv file
+        # Write the Observation to .csv file
         write_to_csv(o, fileName)
 
     # Update knownPlaces with any new entries
@@ -383,7 +383,7 @@ def parse_cmd_line():
     yearArg = False
     i = 0
 
-    # Retreive arguments
+    # Retrieve arguments
     for arg in sys.argv:
         if arg == "--outside":
             if i + 1 >= len(sys.argv):
@@ -409,7 +409,7 @@ def parse_cmd_line():
             )
             exit(1)
 
-    # ensure outside is in correct format
+    # Ensure outside is in correct format
     if not outside.isnumeric() or (int(outside) != 0 and int(outside) != 1):
         print("ERROR: Invalid outside argument, must be 0 or 1")
         exit(1)
@@ -432,7 +432,7 @@ def main():
     dict = get_observations(int(args["outside"]), args["year"])
     fileName = prepare_data_file(int(args["outside"]))
     write_observations(dict, fileName)
-    # format_data scrip expects the file path to begin with 'data', not './data'
+    # format_data.py script expects the file path to begin with 'data', not './data'
     sys.stdout.writelines(fileName[2:])
     exit(0)
 
