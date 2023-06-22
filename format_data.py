@@ -1,9 +1,9 @@
 ﻿"""
 Created on May 14th, 2018
 Author: Miles McCall
+Modified by Myles Scholz, June 2023
 Sources:
-Description: Parse the "Pollinator Plant Master List" maintained by Signe and
-            generate a formatted version for uploading to the website.
+Description: Parse pollinator data pulled from iNaturalist.org and generate a reformatted version.
 """
 
 # External imports
@@ -15,7 +15,6 @@ import csv
 import openpyxl
 from openpyxl import load_workbook
 from openpyxl import Workbook
-
 
 # Local imports
 import col_functions
@@ -245,86 +244,26 @@ def search_header(header, search_str):
             return index
 
 
-def print_out_header(line_to_print, csv_file):
-    print(line_to_print)
-
-    with open(csv_file, "w", newline="") as file:
-        for index, col in enumerate(line_to_print):
-            # If the current col has a value, print it
-
-            if col != "":
-                file.write(str(col))
-
-            # If the current col isn't the last, print a comma
-
-            # This can be separated because both
-
-            # blank and full cols need a comma
-
-            if index < len(line_to_print):
-                file.write(",")
-
-        # Append newline as the last step to start the next row
-
-        file.write("\n")
+def write_list_to_csv(list: list, csv_file: str):
+    with open(csv_file, "a", newline="") as file:
+        writer = csv.writer(file, delimiter=",", lineterminator="\n")
+        writer.writerow(list)
 
 
-def print_out_row(line_to_print, csv_file):
-    # print(line_to_print)
-
-    # with open(csv_file, 'a', newline = '') as f:
-
-    with open(csv_file, "a") as f:
-        writer = csv.writer(f)
-
-        writer.writerow(line_to_print)
-
-    """
-    with open(csv_file,'a',newline='') as file:
-
-        # Append generated row to output file
-
-        print(repr(line_to_print))
-
-        for index, col in enumerate(line_to_print):
-
-            # If the current col has a value, print it
-
-            if col != '':
-                file.write(str(col))
-
-            # If the current col isn't the last, print a comma
-
-            # This can be separated because both
-                #blank and full cols need a comma
-
-            if index < len(line_to_print):
-
-                file.write(',')
-
-        # Append newline as the last step to start the next row
-
-        #file.write("\n")
-    """
+def write_string_to_csv(line: str, csv_file: str):
+    with open(csv_file, "a", newline="") as file:
+        writer = csv.writer(file, delimiter=",", lineterminator="\n")
+        writer.writerow(line.split(","))
 
 
 def remove_blank_rows(out_file):
     header, rows = read_csv(out_file)
 
-    print_out_header(header, out_file)
+    write_list_to_csv(header, out_file)
 
     for line in rows:
-        a = repr(str(line))
-
-        # print("line:",a,"\n\t")
-
-        if line == "\n":
-            print("blank row removed")
-
-        else:
-            # print("keeping line")
-
-            print_out_row(line, out_file)
+        if line != "\n":
+            write_string_to_csv(line, out_file)
 
 
 def check_for_cols(in_header, in_row, query_string):
@@ -352,7 +291,7 @@ def gen_output(output_header, output_file, input_header, input_data):
     # Create rows of formatted data and append to output csv
     print("Generating output data...")
     # Print header row
-    print_out_header(output_header, output_file)
+    write_list_to_csv(output_header, output_file)
 
     # Parse input rows
     for in_row in csv.reader(input_data, skipinitialspace=True):
@@ -496,24 +435,23 @@ def gen_output(output_header, output_file, input_header, input_data):
         out_row.append(url)
 
         # End of appending to output row
+
         # Append generated row to output file
         # If the row has multiple bees collected, expand by that many
-        print("res:")
-
         if specimenid is not None and specimenid != "":
             try:
                 specimenid = int(specimenid)
                 if int(specimenid) >= 1:
-                    print("multiple bees, printing", specimenid, "times...")
+                    # print("Multiple bees, printing", specimenid, "times...")
                     for i in range(1, int(specimenid) + 1):
                         out_row[search_header(output_header, "Specimen ID")] = i
-                        print_out_row(out_row, output_file)
-                        print(out_row)
+                        write_list_to_csv(out_row, output_file)
+                        # print(out_row)
             except ValueError:
-                pass  # it was a string, not an int.
-                print_out_row(out_row, output_file)
-                print(out_row)
-        print()
+                # it was a string, not an int.
+                write_list_to_csv(out_row, output_file)
+                # print(out_row)
+        # print()
 
 
 def main():
