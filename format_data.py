@@ -84,101 +84,89 @@ def count_cols(workbook, worksheet):
 
 def parse_cmd_line():
     # Parse the command line arguments:
-
     # Determine an input path, output path, and input file type
 
     print("Parsing command line arguments...")
 
     # Init vars
-
     i = 0
+    input_path = ""
+    output_path = ""
+    input_file_type = ""
 
-    in_file = ""
+    # Input file is required
+    if "--input" not in sys.argv:
+        print("ERROR: --input argument must be provided")
+        exit(1)
 
-    out_file = ""
-
-    in_type = ""
-
-    # Iterate through cmd line and assign strings to input and output paths
-
+    # Iterate through command line and assign strings to input and output paths
     for arg in sys.argv:
         if arg == "--input":
-            in_file = sys.argv[i + 1]
+            if i + 1 >= len(sys.argv):
+                print("ERROR: --input argument not set")
+                exit(1)
 
+            input_path = sys.argv[i + 1]
         elif arg == "--output":
-            out_file = sys.argv[i + 1]
+            if i + 1 >= len(sys.argv):
+                print("ERROR: --output argument not set")
+                exit(1)
+
+            output_path = sys.argv[i + 1]
 
         i += 1
 
     # Input path:
     # data/folder_name/file_name
 
-    # Input file is required
-
-    if in_file == "":
-        print("'--input' argument must be provided. Exitting.")
-
-        sys.exit(1)
-
     # The input file must be kept in data dir
+    if input_path.split("/")[0] != "data":
+        print("ERROR: --input file must be saved inside the 'data' directory")
+        exit(1)
 
-    if in_file.split("/")[0] != "data":
-        print("'--input' file must be saved inside the data directory. Exitting.")
+    # Parse input file and input file type
+    input_path_split = input_path.split("/")
+    input_file = input_path_split[-1]
 
-        sys.exit(1)
-
-    # Parse input file type
-
-    in_type = in_file.split("/")[len(in_file.split("/")) - 1]
-
-    in_file_name = in_type
-
-    in_type = in_type.split(".")[len(in_type.split(".")) - 1]
-
-    # Parse input file name
-
-    in_file_name = in_file_name.split(".")[0]
+    input_file_split = input_file.split(".")
+    input_file_name = input_file_split[0]
+    input_file_type = input_file_split[1]
 
     # Output path:
     # results/folder_name/file_name
 
-    # If the output file does exist it must be kept in the results dir
-
-    if out_file != "" and out_file.split("/")[0] != "results":
-        print("'--output' file must be saved inside the results directory. Exitting.")
-
-        sys.exit(1)
+    # If the output file does exist, it must be kept in the results dir
+    if output_path != "" and output_path.split("/")[0] != "results":
+        print("ERROR: --output file must be saved inside the 'results' directory")
+        exit(1)
 
     # If output was not specified, use the input folder name
-
-    if out_file == "":
+    if output_path == "":
         # We will use the split file path components
+        output_path = "results/" + input_path.split("/")[1] + "/results.csv"
 
-        out_file = "results/" + in_file.split("/")[1] + "/results.csv"
-
-        out_file_windows = "results/" + in_file.split("/")[1] + "/results_windows.csv"
-
-    # Its necessary to append a '/' to the output folder so its treated as a dir
-
-    out_folder = "results/" + in_file.split("/")[1] + "/"
+    # Remove file from output path to get the output directory
+    # Append '/' so it is treated as a directory
+    output_folder = output_path[: output_path.rindex("/")] + "/"
 
     # Create output folder
-
-    if not os.path.exists(os.path.dirname(out_folder)):
+    if not os.path.exists(os.path.dirname(output_folder)):
         try:
-            os.makedirs(os.path.dirname(out_folder))
-
+            os.makedirs(os.path.dirname(output_folder))
         except OSError as exc:  # Guard against race condition
             if exc.errno != errno.EEXIST:
                 raise
 
     # Create output file
+    f = open(output_path, "w")
+    f.close()
 
-    f = open(out_file, "w")
-
-    # Return vars
-
-    return in_file, in_file_name, in_type.lower(), out_file, out_file_windows
+    return (
+        input_path,
+        input_file_name,
+        input_file_type.lower(),
+        output_path,
+    )
 
 
 def read_csv_header(file_string):
@@ -207,53 +195,43 @@ def read_csv(file_string):
     print("\tReading from CSV...")
 
     # Open CSV file
-
     file = open(file_string, "r")
 
     # Read the first line into header var
-
     header_row = file.readline()
 
     # Iterate through rest of file, saving in array
-
     file_rows = []
 
     for line in file:
         file_rows.append(line)
 
     # Returns the header row and line array
-
     return header_row, file_rows
 
 
 def read_xlsx(file_string):
     print("\tReading from Excel spreadsheet...")
+    # TODO: Read xlsx header and content, save them to strings, and return them
 
 
 def read_data(file_string, file_type):
     print("Reading data from input source...")
 
     # Variables to capture the header row and following data
-
     header = ""
-
     file_rows = []
 
     # Check which file type to read from
-
     if file_type == "csv":
         header, file_rows = read_csv(file_string)
-
     elif file_type == "xlsx":
         header, file_rows = read_xlsx(file_string)
-
     else:
-        print("Invalid input file type. Exitting.")
-
-        sys.exit(1)
+        print("ERROR: Invalid input file type")
+        exit(1)
 
     # Strip header of extra characters and converts individuals chars into words
-
     header = header.strip().split(",")
 
     return header, file_rows
@@ -361,7 +339,7 @@ def check_for_cols(in_header, in_row, query_string):
         return in_row[search_res]
 
 
-def gen_output(out_header, out_file, in_header, in_data):
+def gen_output(output_header, output_file, input_header, input_data):
     """
     Generate data for the output file
 
@@ -374,10 +352,10 @@ def gen_output(out_header, out_file, in_header, in_data):
     # Create rows of formatted data and append to output csv
     print("Generating output data...")
     # Print header row
-    print_out_header(out_header, out_file)
+    print_out_header(output_header, output_file)
 
     # Parse input rows
-    for in_row in csv.reader(in_data, skipinitialspace=True):
+    for in_row in csv.reader(input_data, skipinitialspace=True):
         # Init the output row
         out_row = []
         # Observation No.
@@ -386,18 +364,18 @@ def gen_output(out_header, out_file, in_header, in_data):
         out_row.append(" ")
 
         # iNaturalist ID
-        id = check_for_cols(in_header, in_row, "user_id")
+        id = check_for_cols(input_header, in_row, "user_id")
 
         out_row.append(id)
 
         # iNaturalist Alias
-        iNat_alias = check_for_cols(in_header, in_row, "user_login")
+        iNat_alias = check_for_cols(input_header, in_row, "user_login")
         out_row.append(iNat_alias)
 
         # Collector - First Name
         # Collector - First Initial
         # Collector - Last Name
-        u_name = check_for_cols(in_header, in_row, "user_login")
+        u_name = check_for_cols(input_header, in_row, "user_login")
         f_name, f_initial, l_name = col_functions.collector_name(
             "data/usernames.csv", u_name
         )
@@ -406,21 +384,23 @@ def gen_output(out_header, out_file, in_header, in_data):
         out_row.append(l_name)
 
         # Sample ID
-        sampleid = check_for_cols(in_header, in_row, "field:sample id.")
+        sampleid = check_for_cols(input_header, in_row, "field:sample id.")
         out_row.append(sampleid)
 
         # Specimen ID
-        specimenid = check_for_cols(in_header, in_row, "field:number of bees collected")
+        specimenid = check_for_cols(
+            input_header, in_row, "field:number of bees collected"
+        )
         out_row.append(specimenid)
 
         # Collection Day 1
         # Month 1
         # Year 1
         # Time 1
-        date1 = check_for_cols(in_header, in_row, "observed_on")
+        date1 = check_for_cols(input_header, in_row, "observed_on")
         day1, month1, year1 = col_functions.date_1(date1)
         time1 = col_functions.time_1(
-            in_row[search_header(in_header, "time_observed_at")]
+            in_row[search_header(input_header, "time_observed_at")]
         )
         out_row.append(day1)
         out_row.append(month1)
@@ -431,7 +411,7 @@ def gen_output(out_header, out_file, in_header, in_data):
         # Month 2
         # Year 2
         # Time 2
-        date2 = check_for_cols(in_header, in_row, "field:trap removed")
+        date2 = check_for_cols(input_header, in_row, "field:trap removed")
         day2, month2, year2, merge2 = col_functions.date_2(date2)
         time2 = col_functions.time_2(date2)
         out_row.append(day2)
@@ -444,23 +424,23 @@ def gen_output(out_header, out_file, in_header, in_data):
         out_row.append(country)
 
         # State
-        state = check_for_cols(in_header, in_row, "place_state_name")
+        state = check_for_cols(input_header, in_row, "place_state_name")
         if state == "Oregon":
             state = "OR"
         out_row.append(state)
 
         # County
-        county = check_for_cols(in_header, in_row, "place_county_name")
+        county = check_for_cols(input_header, in_row, "place_county_name")
         out_row.append(county)
 
         # Location
-        place_guess = check_for_cols(in_header, in_row, "place_guess")
+        place_guess = check_for_cols(input_header, in_row, "place_guess")
         location = col_functions.location_guess(place_guess)
         out_row.append(location)
 
         # Site Description
         site_description = check_for_cols(
-            in_header, in_row, "field:collection site description"
+            input_header, in_row, "field:collection site description"
         )
         out_row.append(site_description)
 
@@ -470,8 +450,8 @@ def gen_output(out_header, out_file, in_header, in_data):
 
         # Dec. Lat.
         # Dec. Long.
-        lat = check_for_cols(in_header, in_row, "latitude")
-        long = check_for_cols(in_header, in_row, "longitude")
+        lat = check_for_cols(input_header, in_row, "latitude")
+        long = check_for_cols(input_header, in_row, "longitude")
         if lat == "" or long == "":
             out_row.append("")
             out_row.append("")
@@ -486,7 +466,7 @@ def gen_output(out_header, out_file, in_header, in_data):
                 out_row.append(long)
 
         # Pos Accuracy
-        pos_acc = check_for_cols(in_header, in_row, "positional_accuracy")
+        pos_acc = check_for_cols(input_header, in_row, "positional_accuracy")
         out_row.append(pos_acc)
 
         # Elevation
@@ -500,7 +480,7 @@ def gen_output(out_header, out_file, in_header, in_data):
         # collection_method = check_for_cols(in_header, in_row, "field:oba collection method")
         # only use first word of collection method
         collection_string = check_for_cols(
-            in_header, in_row, "field:oba collection method"
+            input_header, in_row, "field:oba collection method"
         )
         collection_method = col_functions.collection(collection_string)
         out_row.append(collection_method)
@@ -508,9 +488,9 @@ def gen_output(out_header, out_file, in_header, in_data):
         # Associated plant - family
         # Associated plant - species
         # Associated plant - iNaturalist url
-        family = check_for_cols(in_header, in_row, "taxon_family_name")
-        species = check_for_cols(in_header, in_row, "scientific_name")
-        url = check_for_cols(in_header, in_row, "url")
+        family = check_for_cols(input_header, in_row, "taxon_family_name")
+        species = check_for_cols(input_header, in_row, "scientific_name")
+        url = check_for_cols(input_header, in_row, "url")
         out_row.append(family)
         out_row.append(species)
         out_row.append(url)
@@ -526,99 +506,81 @@ def gen_output(out_header, out_file, in_header, in_data):
                 if int(specimenid) >= 1:
                     print("multiple bees, printing", specimenid, "times...")
                     for i in range(1, int(specimenid) + 1):
-                        out_row[search_header(out_header, "Specimen ID")] = i
-                        print_out_row(out_row, out_file)
+                        out_row[search_header(output_header, "Specimen ID")] = i
+                        print_out_row(out_row, output_file)
                         print(out_row)
             except ValueError:
                 pass  # it was a string, not an int.
-                print_out_row(out_row, out_file)
+                print_out_row(out_row, output_file)
                 print(out_row)
         print()
 
 
-def create_csv_windows(out_file, out_file_windows):
-    # with open('/pythonwork/thefile_subset11.csv', 'w', newline='') as outfile:
-
-    # writer = csv.writer(outfile)
-
-    header, rows = read_csv(out_file)
-
-    print_out_header(header, out_file_windows)
-
-    for line in rows:
-        temp = repr(str(line))
-
-        # print(temp)
-
-        temp = temp[:-3]
-
-        # print(temp)
-
-        print_out_row(temp, out_file_windows)
-
-
 def main():
     # Intro
-
     print("iNaturalist Pipeline -----------------------")
 
-    # Variables to keep track of
-
+    # I/O variables
     input_file = ""
-
     output_file = ""
-
     input_file_type = ""
 
     # Parse command line arguments
-
     (
         input_file,
         input_file_name,
         input_file_type,
         output_file,
-        output_file_windows,
     ) = parse_cmd_line()
 
     # Pipeline Description
-
     print("\tInput path:\t", input_file)
-
     print("\tInput name:\t", input_file_name)
-
     print("\tInput type:\t", input_file_type)
-
     print("\tOutput path:\t", output_file)
-
-    print("\tOutput path:\t", output_file_windows)
-
     print()
 
     # Choose which file reading function to call
-
     input_header, input_rows = read_data(input_file, input_file_type)
 
     print()
-
     # Sort columns before writing output
-
-    # output_header = "Date Label Printed,Date Label Sent,Observation No.,Voucher No.,iNaturalist ID,iNaturalist Alias,Collector - First Name,Collector - First Name Initial,Collector - Last Name,Sample ID,Specimen ID,Collection Day 1,Month 1,Year 1,Time 1,Collection Day 2,Month 2,Year 2,Collection Day 2 Merge,Time 2,Country,State,County,Location,Collection Site Description,Abbreviated Location,Dec. Lat.,Dec. Long.,Lat/Long Accuracy,Elevation,Collection method,Associated plant - family,Associated plant - species,Associated plant - Inaturalist URL".split(",")
-
-    output_header = "Observation No.,Voucher No.,iNaturalist ID,iNaturalist Alias,Collector - First Name,Collector - First Name Initial,Collector - Last Name,Sample ID,Specimen ID,Collection Day 1,Month 1,Year 1,Time 1,Collection Day 2,Month 2,Year 2,Time 2,Country,State,County,Location,Collection Site Description,Abbreviated Location,Dec. Lat.,Dec. Long.,Lat/Long Accuracy,Elevation,Collection method,Associated plant - family,Associated plant - species,Associated plant - Inaturalist URL".split(
-        ","
-    )
-
-    # Revisit
-
-    # output_header2 = read_xlsx_header("data/4_16_19/Output_from_Script.xlsx","Sheet1")
-
-    # print(output_header2)
+    output_header = [
+        "Observation No.",
+        "Voucher No.",
+        "iNaturalist ID",
+        "iNaturalist Alias",
+        "Collector - First Name",
+        "Collector - First Name Initial",
+        "Collector - Last Name",
+        "Sample ID",
+        "Specimen ID",
+        "Collection Day 1",
+        "Month 1",
+        "Year 1",
+        "Time 1",
+        "Collection Day 2",
+        "Month 2",
+        "Year 2",
+        "Time 2",
+        "Country",
+        "State",
+        "County",
+        "Location",
+        "Collection Site Description",
+        "Abbreviated Location",
+        "Dec. Lat.",
+        "Dec. Long.",
+        "Lat/Long Accuracy",
+        "Elevation",
+        "Collection method",
+        "Associated plant - family",
+        "Associated plant - species",
+        "Associated plant - Inaturalist URL",
+    ]
 
     # Create output data
-
     gen_output(output_header, output_file, input_header, input_rows)
-
-    # create_csv_windows(output_file, output_file_windows)
 
     print()
 
