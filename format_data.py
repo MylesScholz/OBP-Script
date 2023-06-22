@@ -236,14 +236,6 @@ def read_data(file_string, file_type):
     return header, file_rows
 
 
-def search_header(header, search_str):
-    # Locate the index of a string in the header row
-
-    for index, col in enumerate(header):
-        if col == search_str:
-            return index
-
-
 def write_list_to_csv(list: list, csv_file: str):
     with open(csv_file, "a", newline="") as file:
         writer = csv.writer(file, delimiter=",", lineterminator="\n")
@@ -266,30 +258,29 @@ def remove_blank_rows(out_file):
             write_string_to_csv(line, out_file)
 
 
-def check_for_cols(in_header, in_row, query_string):
-    search_res = search_header(in_header, query_string)
+def get_row_value_by_column(header: list, row: list, column_name: str):
+    column_index = header.find(column_name)
 
-    # print(search_res)
-
-    if search_res is None:
+    if column_index == -1:
         return ""
-
     else:
-        return in_row[search_res]
+        return row[column_index]
 
 
 def print_over_line(string: str):
     print("\033[K" + string + "\r", end="")
 
 
-def gen_output(output_header, output_file, input_header, input_data):
+def gen_output(
+    output_header: list, output_file: str, input_header: list, input_rows: list
+):
     """
     Generate data for the output file
 
-    :param out_header: header row values of the output file
-    :param out_file: output file
-    :param in_header: header row values of the input file
-    :param in_data: input data
+    :param output_header: list of column labels (the header) for the output CSV
+    :param output_file: output file path
+    :param input_header: list of column labels (the header) for the input CSV
+    :param input_rows: list of lines (strings) read from the input CSV
     """
 
     # Create rows of formatted data and append to output csv
@@ -301,145 +292,147 @@ def gen_output(output_header, output_file, input_header, input_data):
     row_count = 0
 
     # Parse input rows
-    for in_row in csv.reader(input_data, skipinitialspace=True):
+    # csv.reader automatically splits input_row on commas into a list of strings
+    for input_row in csv.reader(input_rows, skipinitialspace=True):
         # Init the output row
-        out_row = []
+        output_row = []
         # Observation No.
         # Voucher No.
-        out_row.append(" ")
-        out_row.append(" ")
+        output_row.append(" ")
+        output_row.append(" ")
 
         # iNaturalist ID
-        id = check_for_cols(input_header, in_row, "user_id")
-
-        out_row.append(id)
+        iNaturalist_id = get_row_value_by_column(input_header, input_row, "user_id")
+        output_row.append(iNaturalist_id)
 
         # iNaturalist Alias
-        iNat_alias = check_for_cols(input_header, in_row, "user_login")
-        out_row.append(iNat_alias)
+        iNaturalist_alias = get_row_value_by_column(
+            input_header, input_row, "user_login"
+        )
+        output_row.append(iNaturalist_alias)
 
         # Collector - First Name
         # Collector - First Initial
         # Collector - Last Name
-        u_name = check_for_cols(input_header, in_row, "user_login")
+        u_name = get_row_value_by_column(input_header, input_row, "user_login")
         f_name, f_initial, l_name = col_functions.collector_name(
             "data/usernames.csv", u_name
         )
-        out_row.append(f_name)
-        out_row.append(f_initial)
-        out_row.append(l_name)
+        output_row.append(f_name)
+        output_row.append(f_initial)
+        output_row.append(l_name)
 
         # Sample ID
-        sampleid = check_for_cols(input_header, in_row, "field:sample id.")
-        out_row.append(sampleid)
+        sampleid = get_row_value_by_column(input_header, input_row, "field:sample id.")
+        output_row.append(sampleid)
 
         # Specimen ID
-        specimenid = check_for_cols(
-            input_header, in_row, "field:number of bees collected"
+        specimenid = get_row_value_by_column(
+            input_header, input_row, "field:number of bees collected"
         )
-        out_row.append(specimenid)
+        output_row.append(specimenid)
 
         # Collection Day 1
         # Month 1
         # Year 1
         # Time 1
-        date1 = check_for_cols(input_header, in_row, "observed_on")
+        date1 = get_row_value_by_column(input_header, input_row, "observed_on")
         day1, month1, year1 = col_functions.date_1(date1)
-        time1 = col_functions.time_1(
-            in_row[search_header(input_header, "time_observed_at")]
-        )
-        out_row.append(day1)
-        out_row.append(month1)
-        out_row.append(year1)
-        out_row.append(time1)
+        time1 = col_functions.time_1(input_row[input_header.index("time_observed_at")])
+        output_row.append(day1)
+        output_row.append(month1)
+        output_row.append(year1)
+        output_row.append(time1)
 
         # Collection Day 2
         # Month 2
         # Year 2
         # Time 2
-        date2 = check_for_cols(input_header, in_row, "field:trap removed")
+        date2 = get_row_value_by_column(input_header, input_row, "field:trap removed")
         day2, month2, year2, merge2 = col_functions.date_2(date2)
         time2 = col_functions.time_2(date2)
-        out_row.append(day2)
-        out_row.append(month2)
-        out_row.append(year2)
-        out_row.append(time2)
+        output_row.append(day2)
+        output_row.append(month2)
+        output_row.append(year2)
+        output_row.append(time2)
 
         # Country
         country = "USA"
-        out_row.append(country)
+        output_row.append(country)
 
         # State
-        state = check_for_cols(input_header, in_row, "place_state_name")
+        state = get_row_value_by_column(input_header, input_row, "place_state_name")
         if state == "Oregon":
             state = "OR"
-        out_row.append(state)
+        output_row.append(state)
 
         # County
-        county = check_for_cols(input_header, in_row, "place_county_name")
-        out_row.append(county)
+        county = get_row_value_by_column(input_header, input_row, "place_county_name")
+        output_row.append(county)
 
         # Location
-        place_guess = check_for_cols(input_header, in_row, "place_guess")
+        place_guess = get_row_value_by_column(input_header, input_row, "place_guess")
         location = col_functions.location_guess(place_guess)
-        out_row.append(location)
+        output_row.append(location)
 
         # Site Description
-        site_description = check_for_cols(
-            input_header, in_row, "field:collection site description"
+        site_description = get_row_value_by_column(
+            input_header, input_row, "field:collection site description"
         )
-        out_row.append(site_description)
+        output_row.append(site_description)
 
         # Abbreviated Location
         abbreviated_location = location
-        out_row.append(abbreviated_location)
+        output_row.append(abbreviated_location)
 
         # Dec. Lat.
         # Dec. Long.
-        lat = check_for_cols(input_header, in_row, "latitude")
-        long = check_for_cols(input_header, in_row, "longitude")
+        lat = get_row_value_by_column(input_header, input_row, "latitude")
+        long = get_row_value_by_column(input_header, input_row, "longitude")
         if lat == "" or long == "":
-            out_row.append("")
-            out_row.append("")
+            output_row.append("")
+            output_row.append("")
         else:
             lat = col_functions.round_coord(lat)
             long = col_functions.round_coord(long)
             if lat is None or long is None:
-                out_row.append("")
-                out_row.append("")
+                output_row.append("")
+                output_row.append("")
             else:
-                out_row.append(lat)
-                out_row.append(long)
+                output_row.append(lat)
+                output_row.append(long)
 
         # Pos Accuracy
-        pos_acc = check_for_cols(input_header, in_row, "positional_accuracy")
-        out_row.append(pos_acc)
+        pos_acc = get_row_value_by_column(
+            input_header, input_row, "positional_accuracy"
+        )
+        output_row.append(pos_acc)
 
         # Elevation
         if lat is None or long is None or lat == "" or long == "":
-            out_row.append("")
+            output_row.append("")
         else:
             elevation = col_functions.elevation(lat, long)
-            out_row.append(elevation)
+            output_row.append(elevation)
 
         # Collection method
         # collection_method = check_for_cols(in_header, in_row, "field:oba collection method")
         # only use first word of collection method
-        collection_string = check_for_cols(
-            input_header, in_row, "field:oba collection method"
+        collection_string = get_row_value_by_column(
+            input_header, input_row, "field:oba collection method"
         )
         collection_method = col_functions.collection(collection_string)
-        out_row.append(collection_method)
+        output_row.append(collection_method)
 
         # Associated plant - family
         # Associated plant - species
         # Associated plant - iNaturalist url
-        family = check_for_cols(input_header, in_row, "taxon_family_name")
-        species = check_for_cols(input_header, in_row, "scientific_name")
-        url = check_for_cols(input_header, in_row, "url")
-        out_row.append(family)
-        out_row.append(species)
-        out_row.append(url)
+        family = get_row_value_by_column(input_header, input_row, "taxon_family_name")
+        species = get_row_value_by_column(input_header, input_row, "scientific_name")
+        url = get_row_value_by_column(input_header, input_row, "url")
+        output_row.append(family)
+        output_row.append(species)
+        output_row.append(url)
 
         # End of appending to output row
 
@@ -451,12 +444,12 @@ def gen_output(output_header, output_file, input_header, input_data):
                 if int(specimenid) >= 1:
                     # print("Multiple bees, printing", specimenid, "times...")
                     for i in range(1, int(specimenid) + 1):
-                        out_row[search_header(output_header, "Specimen ID")] = i
-                        write_list_to_csv(out_row, output_file)
+                        output_row[output_header.index("Specimen ID")] = i
+                        write_list_to_csv(output_row, output_file)
                         # print(out_row)
             except ValueError:
                 # it was a string, not an int.
-                write_list_to_csv(out_row, output_file)
+                write_list_to_csv(output_row, output_file)
                 # print(out_row)
 
             row_count += 1
