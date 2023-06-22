@@ -278,6 +278,10 @@ def check_for_cols(in_header, in_row, query_string):
         return in_row[search_res]
 
 
+def print_over_line(string: str):
+    print("\033[K" + string + "\r", end="")
+
+
 def gen_output(output_header, output_file, input_header, input_data):
     """
     Generate data for the output file
@@ -292,6 +296,9 @@ def gen_output(output_header, output_file, input_header, input_data):
     print("Generating output data...")
     # Print header row
     write_list_to_csv(output_header, output_file)
+
+    # Counter for printing out
+    row_count = 0
 
     # Parse input rows
     for in_row in csv.reader(input_data, skipinitialspace=True):
@@ -451,7 +458,11 @@ def gen_output(output_header, output_file, input_header, input_data):
                 # it was a string, not an int.
                 write_list_to_csv(out_row, output_file)
                 # print(out_row)
-        # print()
+
+            row_count += 1
+            print_over_line("\t" + str(row_count))
+
+    print()
 
 
 def main():
