@@ -12,6 +12,11 @@ currentDate=`date`
 #Keys: project titles
 #Values: project IDs
 #Project IDs can be found from https://www.inaturalist.org/observations/identify
+#   Click "Filters"
+#   Click "More Filters"
+#   Search for the project in the "Project" field
+#   Select the project from the search results so it shows up in green in the project field
+#   The project ID will appear in the URL
 declare -A sources=(
     ["Oregon Bee Atlas (Plant Images/SampleID)"]=18521
     ["Master Melittologist (outside of Oregon)"]=99706

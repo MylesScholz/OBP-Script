@@ -44,6 +44,10 @@ STATEADMINLEVEL = 10
 COUNTRYADMINLEVEL = 0
 # File to track known places name
 KNOWNPLACESFILENAME = "places.json"
+# Dictionary of abbreviations for known sources. Prepended to output folders.
+# Keys: String of project ID, as passed as command line arguments to this script
+# Values: Abbreviation string
+SOURCEABBREVIATIONS = {"18521": "OBA", "99706": "MM", "166376": "WaBA"}
 
 
 # Class to contain observaion fields of interest
@@ -210,7 +214,7 @@ def get_value_from_ofvs(name, ofvs):
     return ""
 
 
-def get_observations(source, year):
+def get_observations(source: int, year: str):
     """
     Get all observations, project pulled from depends on source value (the project ID), and year minimum can be specified
     """
@@ -277,7 +281,7 @@ def none_to_empty_string(observation):
     return observation
 
 
-def write_observations(dict, fileName):
+def write_observations(dict, fileName: str):
     """
     Write all observations to .csv file
     """
@@ -307,7 +311,7 @@ def write_observations(dict, fileName):
     write_to_place_file(knownPlaces)
 
 
-def prepare_data_file(source):
+def prepare_data_file(source: str):
     """
     Ensure folders are in place, and create a .csv file with header values to write to
     """
@@ -318,7 +322,10 @@ def prepare_data_file(source):
     folderName = currentDate.replace("-", "_")
     # Put 2-digit year at end (MM_DD_YY)
     folderName = folderName[5:] + "_" + folderName[2:4]
-    folderName = source + "_" + folderName
+    if source in SOURCEABBREVIATIONS:
+        folderName = SOURCEABBREVIATIONS[source] + "_" + folderName
+    else:
+        folderName = source + "_" + folderName
 
     # Check for data folder
     if not os.path.isdir("./data"):
@@ -335,7 +342,7 @@ def prepare_data_file(source):
     return fileName
 
 
-def write_to_csv(observation, fileName):
+def write_to_csv(observation: Observation, fileName: str):
     """
     Write an observation to a .csv file from an Observation object
     """
@@ -415,7 +422,7 @@ def parse_cmd_line():
     return {"year": year, "source": source}
 
 
-def write_header_to_csv(fileName):
+def write_header_to_csv(fileName: str):
     """
     Write header values to a .csv file
     """
