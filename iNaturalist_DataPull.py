@@ -17,6 +17,7 @@ OBSERVATIONATTRIBUTES = [
     "time_observed_at",
     "user_id",
     "user_login",
+    "user_full_name",
     "created_at",
     "url",
     "place_guess",
@@ -57,6 +58,7 @@ class Observation:
     time_observed_at = None
     user_id = None
     user_login = None
+    user_full_name = None
     created_at = None
     url = None
     place_guess = None
@@ -77,6 +79,7 @@ class Observation:
         self.time_observed_at = translate_time(d["observed_on"])
         self.user_id = d["user"]["id"]
         self.user_login = d["user"]["login"]
+        self.user_full_name = d["user"]["name"]
         self.created_at = translate_time(d["created_at"])
         self.url = d["uri"]
         self.place_guess = d["place_guess"]
@@ -263,6 +266,8 @@ def none_to_empty_string(observation):
         observation["user"]["id"] = ""
     if observation["user"]["login"] is None:
         observation["user"]["login"] = ""
+    if observation["user"]["name"] is None:
+        observation["user"]["name"] = ""
     if observation["created_at"] is None:
         observation["created_at"] = ""
     if observation["uri"] is None:
@@ -355,6 +360,7 @@ def write_to_csv(observation: Observation, fileName: str):
             observation.time_observed_at,
             observation.user_id,
             observation.user_login,
+            observation.user_full_name,
             observation.created_at,
             observation.url,
             observation.place_guess,

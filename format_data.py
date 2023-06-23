@@ -259,12 +259,12 @@ def remove_blank_rows(out_file):
 
 
 def get_row_value_by_column(header: list, row: list, column_name: str):
-    column_index = header.find(column_name)
-
-    if column_index == -1:
-        return ""
-    else:
+    try:
+        column_index = header.index(column_name)
         return row[column_index]
+    except ValueError:
+        # column_name could not be found in header list
+        return ""
 
 
 def print_over_line(string: str):
@@ -314,23 +314,28 @@ def gen_output(
         # Collector - First Name
         # Collector - First Initial
         # Collector - Last Name
-        u_name = get_row_value_by_column(input_header, input_row, "user_login")
-        f_name, f_initial, l_name = col_functions.collector_name(
-            "data/usernames.csv", u_name
+        user_full_name = get_row_value_by_column(
+            input_header, input_row, "user_full_name"
         )
-        output_row.append(f_name)
-        output_row.append(f_initial)
-        output_row.append(l_name)
+        (
+            user_first_name,
+            user_first_initial,
+            user_last_name,
+        ) = col_functions.split_user_name(iNaturalist_alias, user_full_name)
+
+        output_row.append(user_first_name)
+        output_row.append(user_first_initial)
+        output_row.append(user_last_name)
 
         # Sample ID
-        sampleid = get_row_value_by_column(input_header, input_row, "field:sample id.")
-        output_row.append(sampleid)
+        sample_id = get_row_value_by_column(input_header, input_row, "field:sample id.")
+        output_row.append(sample_id)
 
         # Specimen ID
-        specimenid = get_row_value_by_column(
+        specimen_id = get_row_value_by_column(
             input_header, input_row, "field:number of bees collected"
         )
-        output_row.append(specimenid)
+        output_row.append(specimen_id)
 
         # Collection Day 1
         # Month 1
@@ -438,12 +443,12 @@ def gen_output(
 
         # Append generated row to output file
         # If the row has multiple bees collected, expand by that many
-        if specimenid is not None and specimenid != "":
+        if specimen_id is not None and specimen_id != "":
             try:
-                specimenid = int(specimenid)
-                if int(specimenid) >= 1:
+                specimen_id = int(specimen_id)
+                if int(specimen_id) >= 1:
                     # print("Multiple bees, printing", specimenid, "times...")
-                    for i in range(1, int(specimenid) + 1):
+                    for i in range(1, int(specimen_id) + 1):
                         output_row[output_header.index("Specimen ID")] = i
                         write_list_to_csv(output_row, output_file)
                         # print(out_row)

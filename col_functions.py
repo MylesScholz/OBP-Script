@@ -21,37 +21,42 @@ def test_import():
 # and each function can be modified independently.
 
 
-def collector_name(in_file, user_name):
-    # Open usernames CSV
+def split_user_name(user_login: str, user_full_name: str):
+    user_first_name = user_first_initial = user_last_name = ""
 
-    with open(in_file, "r", encoding="utf-8", errors="replace") as file:
-        for row in file:
-            # Remove trailing characters and split line into array
+    if user_full_name != "":
+        user_full_name_split = user_full_name.split(" ")
 
-            row = row.rstrip("\r\n")
+        # User first name assumed to be the first space-separated word in their full name
+        # This will not capture middle names or compound first names (e.g., Mary Jo)
+        user_first_name = user_full_name_split[0]
+        user_first_initial = user_first_name[0] + "."
 
-            row = row.split(",")
+        # User last name assumed to be the last space-separated word in their full name
+        # This will not capture middle names or compound last names (e.g., van Horn)
+        # If there is only one name provided, the last name will be empty
+        if len(user_full_name_split) > 1:
+            user_last_name = user_full_name_split[-1]
+    else:
+        # user_full_name not provided in pulled data, so check usernames.csv
+        with open(
+            "data/usernames.csv", "r", encoding="utf-8", errors="replace"
+        ) as file:
+            for row in file:
+                # Remove trailing characters and split line into array
+                row = row.rstrip("\r\n")
+                row = row.split(",")
 
-            # Found a match...
+                if row[1] == user_login:
+                    user_full_name_split = row[0].split(" ")
+                    # User first name has caveats as above
+                    user_first_name = user_full_name_split[0]
+                    user_first_initial = user_first_name[0] + "."
 
-            if row[1] == user_name:
-                # First name: 1st word of column 1
+                    # User last name has caveats as above
+                    user_last_name = user_full_name_split[-1]
 
-                first_name = row[0].split(" ")[0]
-
-                # First letter of the first name
-
-                first_initial = first_name[0] + "."
-
-                # Last name: 2nd word of column 1
-
-                last_name = row[0].split(" ")[1]
-
-                # Done
-
-                return first_name, first_initial, last_name
-
-    return "", "", ""
+    return user_first_name, user_first_initial, user_last_name
 
 
 def date_1(in_date):
