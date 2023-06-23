@@ -443,20 +443,19 @@ def gen_output(
         if specimen_id is not None and specimen_id != "":
             try:
                 specimen_id = int(specimen_id)
-                if int(specimen_id) >= 1:
+                if specimen_id >= 1:
                     # print("Multiple bees, printing", specimenid, "times...")
-                    for i in range(1, int(specimen_id) + 1):
+                    for i in range(1, specimen_id + 1):
                         output_row[output_header.index("Specimen ID")] = i
                         write_list_to_csv(output_row, output_file)
                         # print(out_row)
             except ValueError:
-                # it was a string, not an int.
+                # Specimen ID was a string, not an int
                 write_list_to_csv(output_row, output_file)
                 # print(out_row)
 
             row_count += 1
             print_over_line("\t" + str(row_count))
-
     print()
 
 
@@ -525,7 +524,6 @@ def main():
 
     # Create output data
     gen_output(output_header, output_file, input_header, input_rows)
-
     print()
 
 
