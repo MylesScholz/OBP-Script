@@ -6,10 +6,6 @@ import json
 import requests
 
 
-def test_import():
-    print("col_functions.py test")
-
-
 # 'Eval' functions are called from the merge_tables function to evaluate the
 # contents of each column for the output spreadsheet. For each row in the
 # original table, each eval function is called sequentially to construct the
@@ -21,7 +17,7 @@ def test_import():
 # and each function can be modified independently.
 
 
-def split_user_name(user_login: str, user_full_name: str):
+def format_user_name(user_login: str, user_full_name: str):
     user_first_name = user_first_initial = user_last_name = ""
 
     if user_full_name != "":
@@ -59,7 +55,11 @@ def split_user_name(user_login: str, user_full_name: str):
     return user_first_name, user_first_initial, user_last_name
 
 
-def date_1(in_date):
+def format_date_1(input_date):
+    # Check input
+    if input_date == "":
+        return "", "", ""
+
     try:
         month_numeral = [
             "I",
@@ -76,36 +76,23 @@ def date_1(in_date):
             "XIII",
         ]
 
-        # Check input
-
-        if in_date == "":
-            return "", "", ""
-
-        date = in_date.split("/")
-
+        date = input_date.split("/")
         if len(date) > 1:
             day = date[1]
-
             month = month_numeral[int(date[0]) - 1]
-
             year = date[2]
-
         else:
-            date = in_date.split("-")
-
+            date = input_date.split("-")
             day = date[2]
-
             month = month_numeral[int(date[1]) - 1]
-
             year = date[0]
 
         return day, month, year
-
     except:
         return "", "", ""
 
 
-def time_1(in_time):
+def format_time_1(in_time):
     # Check input
 
     if in_time == "":
@@ -134,22 +121,15 @@ def time_1(in_time):
     return return_time
 
 
-def date_2(in_date):
+def format_date_2(in_date):
     # According to Andony M. (email 5/3/2020), these are the possible formats:
-
+    #
     # 5/7/2019 16:45
-
     # 2019/04/28 7:10 PM UTC
-
     # 2019/06/03 12:00 PM PDT
-
     # 2019/06/30 7:52 AM HST
-
     # 2019-06-12T13:26:00-07:00
-
     # 21 Apr 2020 16:30:08 -0700
-
-    # print('in_date 2:' + in_date)
 
     month_numeral = [
         "I",
@@ -276,85 +256,7 @@ def date_2(in_date):
     return day, month, year, merge
 
 
-def date_2_orig(in_date):
-    # Check input
-
-    if in_date == "":
-        return "", "", "", ""
-
-    # Init vars
-
-    month_numeral = [
-        "I",
-        "II",
-        "III",
-        "IV",
-        "V",
-        "VI",
-        "VII",
-        "VIII",
-        "IX",
-        "X",
-        "XI",
-        "XIII",
-    ]
-
-    in_date = in_date.split("T")
-
-    # print(in_date)
-
-    # There are several input formats for this col
-
-    # If the format can be split with T continue:
-
-    if len(in_date) == 2:
-        # print("Splitting with T...")
-
-        in_date = in_date[0].split("-")
-
-        # Parse values from full date string
-
-        day = in_date[2]
-
-        # Reference numeral array
-
-        month = month_numeral[int(in_date[1]) - 1]
-
-        # Year is straight forward
-
-        year = in_date[0]
-
-        # Calculate merge string
-
-        merge = "-" + day + month
-
-    else:
-        # print("Splitting without T...")
-
-        in_date = in_date[0].split(" ")
-
-        in_date = in_date[0].split("/")
-
-        # Check if month is in first or second location
-
-        if int(in_date[1]) > 12:
-            day = in_date[1]
-
-            month = month_numeral[int(in_date[0]) - 1]
-
-        else:
-            day = in_date[0]
-
-            month = month_numeral[int(in_date[1]) - 1]
-
-        year = in_date[2]
-
-        merge = "-" + day + month
-
-    return day, month, year, merge
-
-
-def time_2(in_time):
+def format_time_2(in_time):
     # According to Andony M. (email 5/3/2020), these are the possible formats:
 
     # 5/7/2019 16:45
@@ -476,34 +378,80 @@ def time_2(in_time):
     # return in_time
 
 
-def time_2_orig(in_time):
-    # Check input
+def format_country(country_name: str):
+    country_abbreviation = country_name
 
-    if in_time == "":
-        return ""
+    if country_name == "United States":
+        country_abbreviation = "USA"
 
-    # Split full time string to remove date (1st word)
+    # Insert other known abbreviations here
 
-    in_time = in_time.split("T")
-
-    if len(in_time) == 2:
-        # print("Splitting with T...")
-
-        in_time = in_time[1].split(":")
-
-        in_time = in_time[0] + ":" + in_time[1]
-
-    else:
-        # print("Splitting without T...")
-
-        in_time = in_time[0].split(" ")
-
-        in_time = in_time[1]
-
-    return in_time
+    return country_abbreviation
 
 
-def location_guess(address):
+def format_state(state_name: str):
+    abbreviation = state_name
+
+    # Dictionary of USPS abbreviations for US states
+    state_abbreviations = {
+        "Alabama": "AL",
+        "Alaska": "AK",
+        "Arizona": "AZ",
+        "Arkansas": "AR",
+        "California": "CA",
+        "Colorado": "CO",
+        "Connecticut": "CT",
+        "Delaware": "DE",
+        "Florida": "FL",
+        "Georgia": "GA",
+        "Hawaii": "HI",
+        "Idaho": "ID",
+        "Illinois": "IL",
+        "Indiana": "IN",
+        "Iowa": "IA",
+        "Kansas": "KS",
+        "Kentucky": "KY",
+        "Louisiana": "LA",
+        "Maine": "ME",
+        "Maryland": "MD",
+        "Massachusetts": "MA",
+        "Michigan": "MI",
+        "Minnesota": "MN",
+        "Mississippi": "MS",
+        "Missouri": "MO",
+        "Montana": "MT",
+        "Nebraska": "NE",
+        "Nevada": "NV",
+        "New Hampshire": "NH",
+        "New Jersey": "NJ",
+        "New Mexico": "NM",
+        "New York": "NY",
+        "North Carolina": "NC",
+        "North Dakota": "ND",
+        "Ohio": "OH",
+        "Oklahoma": "OK",
+        "Oregon": "OR",
+        "Pennsylvania": "PA",
+        "Rhode Island": "RI",
+        "South Carolina": "SC",
+        "South Dakota": "SD",
+        "Tennessee": "TN",
+        "Texas": "TX",
+        "Utah": "UT",
+        "Vermont": "VT",
+        "Virginia": "VA",
+        "Washington": "WA",
+        "West Virginia": "WV",
+        "Wisconsin": "WI",
+    }
+
+    if state_name in state_abbreviations:
+        abbreviation = state_abbreviations[state_name]
+
+    return abbreviation
+
+
+def format_location_guess(address):
     """
     location_guess modifies the string from the place_guess column, transforming it into a more useful format.
 
@@ -535,17 +483,11 @@ def specimen_id(specimen_id_str):
             return specimen_id_str
 
 
-def round_coord(coord):
-    temp = "%.4f" % (float(coord))
+def format_coordinate(coordinate):
+    if coordinate is None or coordinate == "":
+        return ""
 
-    if len(temp.split(".")[1]) < 4:
-        print("coordinate didn't have 4 digits:", temp)
-
-        temp = float(str(temp) + "0")
-
-        print("fixed(?):", temp)
-
-    return temp
+    return "{:.4f}".format(float(coordinate))
 
 
 def write_elevation_res(elevation_file, lat, long, elevation):
@@ -609,7 +551,7 @@ def read_elevation_csv(elevation_file, lat, long):
     return ""
 
 
-def elevation(lat, long):
+def format_elevation(lat, long):
     """
     Checks for elevation based on the 'data/elevations.csv' reference file.
     New reference entries are no longer added, as they were previously generated

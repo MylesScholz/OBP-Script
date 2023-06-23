@@ -321,7 +321,7 @@ def gen_output(
             user_first_name,
             user_first_initial,
             user_last_name,
-        ) = col_functions.split_user_name(iNaturalist_alias, user_full_name)
+        ) = col_functions.format_user_name(iNaturalist_alias, user_full_name)
 
         output_row.append(user_first_name)
         output_row.append(user_first_initial)
@@ -342,8 +342,10 @@ def gen_output(
         # Year 1
         # Time 1
         date1 = get_row_value_by_column(input_header, input_row, "observed_on")
-        day1, month1, year1 = col_functions.date_1(date1)
-        time1 = col_functions.time_1(input_row[input_header.index("time_observed_at")])
+        day1, month1, year1 = col_functions.format_date_1(date1)
+        time1 = col_functions.format_time_1(
+            input_row[input_header.index("time_observed_at")]
+        )
         output_row.append(day1)
         output_row.append(month1)
         output_row.append(year1)
@@ -354,21 +356,23 @@ def gen_output(
         # Year 2
         # Time 2
         date2 = get_row_value_by_column(input_header, input_row, "field:trap removed")
-        day2, month2, year2, merge2 = col_functions.date_2(date2)
-        time2 = col_functions.time_2(date2)
+        day2, month2, year2, merge2 = col_functions.format_date_2(date2)
+        time2 = col_functions.format_time_2(date2)
         output_row.append(day2)
         output_row.append(month2)
         output_row.append(year2)
         output_row.append(time2)
 
         # Country
-        country = "USA"
+        place_country_name = get_row_value_by_column(
+            input_header, input_row, "place_country_name"
+        )
+        country = col_functions.format_country(place_country_name)
         output_row.append(country)
 
         # State
         state = get_row_value_by_column(input_header, input_row, "place_state_name")
-        if state == "Oregon":
-            state = "OR"
+        state = col_functions.format_state(state)
         output_row.append(state)
 
         # County
@@ -377,7 +381,7 @@ def gen_output(
 
         # Location
         place_guess = get_row_value_by_column(input_header, input_row, "place_guess")
-        location = col_functions.location_guess(place_guess)
+        location = col_functions.format_location_guess(place_guess)
         output_row.append(location)
 
         # Site Description
@@ -392,32 +396,25 @@ def gen_output(
 
         # Dec. Lat.
         # Dec. Long.
-        lat = get_row_value_by_column(input_header, input_row, "latitude")
-        long = get_row_value_by_column(input_header, input_row, "longitude")
-        if lat == "" or long == "":
-            output_row.append("")
-            output_row.append("")
-        else:
-            lat = col_functions.round_coord(lat)
-            long = col_functions.round_coord(long)
-            if lat is None or long is None:
-                output_row.append("")
-                output_row.append("")
-            else:
-                output_row.append(lat)
-                output_row.append(long)
+        latitude = get_row_value_by_column(input_header, input_row, "latitude")
+        latitude = col_functions.format_coordinate(latitude)
+        output_row.append(latitude)
 
-        # Pos Accuracy
-        pos_acc = get_row_value_by_column(
+        longitude = get_row_value_by_column(input_header, input_row, "longitude")
+        longitude = col_functions.format_coordinate(longitude)
+        output_row.append(longitude)
+
+        # Positional accuracy
+        positional_accuracy = get_row_value_by_column(
             input_header, input_row, "positional_accuracy"
         )
-        output_row.append(pos_acc)
+        output_row.append(positional_accuracy)
 
         # Elevation
-        if lat is None or long is None or lat == "" or long == "":
+        if latitude == "" or longitude == "":
             output_row.append("")
         else:
-            elevation = col_functions.elevation(lat, long)
+            elevation = col_functions.format_elevation(latitude, longitude)
             output_row.append(elevation)
 
         # Collection method
