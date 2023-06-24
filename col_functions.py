@@ -94,20 +94,16 @@ def format_date_1(input_date):
 
 def format_time_1(in_time):
     # Check input
-
     if in_time == "":
         return ""
 
     # Split full time string to remove date (1st word)
-
     in_time = in_time.split(" ")
 
     # Split time word by : to separate hours, mins, secs
-
     return_time = in_time[1].split(":")
 
     # Convert from UTC to PST by -7
-
     if (int(return_time[0]) - 7) < 6:
         return_time[0] = str(int(return_time[0]) + 24 - 7)
 
@@ -115,7 +111,6 @@ def format_time_1(in_time):
         return_time[0] = str(int(return_time[0]) - 7)
 
     # Reattach the hours and minutes, leaving out seconds
-
     return_time = return_time[0] + ":" + return_time[1]
 
     return return_time

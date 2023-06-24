@@ -284,7 +284,7 @@ def print_over_line(string: str):
 
 
 def gen_output(
-    output_header: list, output_file: str, input_header: list, input_rows: list
+    output_header: list, output_file_path: str, input_header: list, input_rows: list
 ):
     """
     Generate data for the output file
@@ -297,7 +297,7 @@ def gen_output(
 
     # Create rows of formatted data and append to output csv
 
-    output_file = open(output_file, "w", newline="")
+    output_file = open(output_file_path, "w", newline="")
     # print("Generating output data...")
     # Print header row
     write_list_to_csv(output_header, output_file)
@@ -312,8 +312,8 @@ def gen_output(
         output_row = []
         # Observation No.
         # Voucher No.
-        output_row.append(" ")
-        output_row.append(" ")
+        output_row.append("")
+        output_row.append("")
 
         # iNaturalist ID
         iNaturalist_id = get_row_value_by_column(input_header, input_row, "user_id")
@@ -469,8 +469,9 @@ def gen_output(
                 # print(out_row)
 
             row_count += 1
-            # print_over_line("\t" + str(row_count))
-    # print()
+            print_over_line("\t" + str(row_count))
+    print()
+    output_file.close()
 
 
 def main():
@@ -478,16 +479,16 @@ def main():
     # print("iNaturalist Pipeline -----------------------")
 
     # I/O variables
-    input_file = ""
-    output_file = ""
+    input_file_path = ""
+    output_file_path = ""
     input_file_type = ""
 
     # Parse command line arguments
     (
-        input_file,
+        input_file_path,
         input_file_name,
         input_file_type,
-        output_file,
+        output_file_path,
     ) = parse_cmd_line()
 
     # Pipeline Description
@@ -499,7 +500,7 @@ def main():
     # print()
 
     # Choose which file reading function to call
-    input_header, input_rows = read_data(input_file, input_file_type)
+    input_header, input_rows = read_data(input_file_path, input_file_type)
 
     # Sort columns before writing output
     output_header = [
@@ -537,9 +538,9 @@ def main():
     ]
 
     # Create output data
-    gen_output(output_header, output_file, input_header, input_rows)
+    gen_output(output_header, output_file_path, input_header, input_rows)
     # print()
-    sys.stdout.writelines(output_file)
+    sys.stdout.writelines(output_file_path)
 
 
 if __name__ == "__main__":
