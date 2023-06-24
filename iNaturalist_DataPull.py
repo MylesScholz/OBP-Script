@@ -322,11 +322,19 @@ def prepare_data_file(source: str):
     """
 
     # Create folder name
+
     # Extract calendar date from full datetime string
     currentDate = str(datetime.datetime.now())[:10]
-    folderName = currentDate.replace("-", "_")
+    # Split date into components and strip leading zeros
+    folderName = currentDate.split("-")
+    for i in range(len(folderName)):
+        folderName[i] = folderName[i].lstrip("0")
+    # Join date components with "_"
+    folderName = "_".join(folderName)
     # Put 2-digit year at end (MM_DD_YY)
     folderName = folderName[5:] + "_" + folderName[2:4]
+
+    # Add identifying prefix
     if source in SOURCEABBREVIATIONS:
         folderName = SOURCEABBREVIATIONS[source] + "_" + folderName
     else:
