@@ -316,10 +316,14 @@ def write_observations(dict, fileName: str):
     write_to_place_file(knownPlaces)
 
 
-def prepare_data_file(source: str):
+def prepare_data_file(source: str, year: str):
     """
     Ensure folders are in place, and create a .csv file with header values to write to
     """
+
+    # Ensure year is not empty (default to current year)
+    if year == "":
+        year = str(datetime.datetime.now().year)
 
     # Create folder name
 
@@ -350,7 +354,7 @@ def prepare_data_file(source: str):
         os.makedirs("./data/" + folderName)
 
     # Create .csv file
-    fileName = "./data/" + folderName + "/observations.csv"
+    fileName = "./data/" + folderName + "/observations_" + year + ".csv"
     write_header_to_csv(fileName)
     return fileName
 
@@ -449,7 +453,7 @@ def write_header_to_csv(fileName: str):
 def main():
     args = parse_cmd_line()
     dict = get_observations(int(args["source"]), args["year"])
-    fileName = prepare_data_file(args["source"])
+    fileName = prepare_data_file(args["source"], args["year"])
     write_observations(dict, fileName)
     # format_data.py script expects the file path to begin with 'data', not './data'
     sys.stdout.writelines(fileName[2:])

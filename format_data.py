@@ -12,6 +12,7 @@ import sys
 import string
 import errno
 import csv
+import io
 import openpyxl
 from openpyxl import load_workbook
 from openpyxl import Workbook
@@ -23,69 +24,69 @@ import col_functions
 # Functions
 
 
-def letter_to_index(letter):
-    """Converts a column letter, e.g. "A", "B", "AA", "BC" etc. to a zero based
-    column index.
-    A becomes 0, B becomes 1, Z becomes 25, AA becomes 26 etc.
+# def letter_to_index(letter):
+#     """Converts a column letter, e.g. "A", "B", "AA", "BC" etc. to a zero based
+#     column index.
+#     A becomes 0, B becomes 1, Z becomes 25, AA becomes 26 etc.
 
-    Args:
-        letter (str): The column index letter.
+#     Args:
+#         letter (str): The column index letter.
 
-    Returns:
-        The column index as an integer.
-    """
+#     Returns:
+#         The column index as an integer.
+#     """
 
-    letter = letter.upper()
+#     letter = letter.upper()
 
-    result = 0
+#     result = 0
 
-    for index, char in enumerate(reversed(letter)):
-        # Get the ASCII number of the letter and subtract 64 so that A
-        # corresponds to 1.
+#     for index, char in enumerate(reversed(letter)):
+#         # Get the ASCII number of the letter and subtract 64 so that A
+#         # corresponds to 1.
 
-        num = ord(char) - 64
+#         num = ord(char) - 64
 
-        # Multiply the number with 26 to the power of `index` to get the correct
-        # value of the letter based on it's index in the string.
+#         # Multiply the number with 26 to the power of `index` to get the correct
+#         # value of the letter based on it's index in the string.
 
-        final_num = (26**index) * num
+#         final_num = (26**index) * num
 
-        result += final_num
+#         result += final_num
 
-    # Subtract 1 from the result to make it zero-based before returning.
+#     # Subtract 1 from the result to make it zero-based before returning.
 
-    return result - 1
-
-
-def count_rows(workbook, worksheet):
-    wb = load_workbook(str(workbook))
-
-    ws = wb[str(worksheet)]
-
-    row_count = str(ws.max_row)
-
-    print("count rows:", row_count)
-
-    return row_count
+#     return result - 1
 
 
-def count_cols(workbook, worksheet):
-    wb = load_workbook(str(workbook))
+# def count_rows(workbook, worksheet):
+#     wb = load_workbook(str(workbook))
 
-    ws = wb[str(worksheet)]
+#     ws = wb[str(worksheet)]
 
-    col_count = str(ws.max_column)
+#     row_count = str(ws.max_row)
 
-    print("count cols:", col_count)
+#     print("count rows:", row_count)
 
-    return col_count
+#     return row_count
+
+
+# def count_cols(workbook, worksheet):
+#     wb = load_workbook(str(workbook))
+
+#     ws = wb[str(worksheet)]
+
+#     col_count = str(ws.max_column)
+
+#     print("count cols:", col_count)
+
+#     return col_count
 
 
 def parse_cmd_line():
     # Parse the command line arguments:
     # Determine an input path, output path, and input file type
 
-    print("Parsing command line arguments...")
+    # print("Parsing command line arguments...")
 
     # Init vars
     i = 0
@@ -131,6 +132,11 @@ def parse_cmd_line():
     input_file_name = input_file_split[0]
     input_file_type = input_file_split[1]
 
+    # If the input file is in the format observations_2023.csv, store the year
+    input_file_year = input_file_name.split("_")
+    if len(input_file_year) > 1:
+        input_file_year = input_file_year[1]
+
     # Output path:
     # results/folder_name/file_name
 
@@ -142,7 +148,13 @@ def parse_cmd_line():
     # If output was not specified, use the input folder name
     if output_path == "":
         # We will use the split file path components
-        output_path = "results/" + input_path.split("/")[1] + "/results.csv"
+        output_path = (
+            "results/"
+            + input_path.split("/")[1]
+            + "/results_"
+            + input_file_year
+            + ".csv"
+        )
 
     # Remove file from output path to get the output directory
     # Append '/' so it is treated as a directory
@@ -174,24 +186,24 @@ def read_csv_header(file_string):
     return file.readline()
 
 
-def read_xlsx_header(wb_name, ws_name):
-    wb = load_workbook(wb_name)
+# def read_xlsx_header(wb_name, ws_name):
+#     wb = load_workbook(wb_name)
 
-    ws = wb[str(ws_name)]
+#     ws = wb[str(ws_name)]
 
-    max_col = list(string.ascii_lowercase)[ws.max_column - 1].upper()
+#     max_col = list(string.ascii_lowercase)[ws.max_column - 1].upper()
 
-    print(max_col)
+#     print(max_col)
 
-    print(ws.max_column)
+#     print(ws.max_column)
 
-    selection_str = "A1:" + max_col + "1"
+#     selection_str = "A1:" + max_col + "1"
 
-    return ws[selection_str].ecnode("utf8")
+#     return ws[selection_str].ecnode("utf8")
 
 
 def read_csv(file_string):
-    print("\tReading from CSV...")
+    # print("\tReading from CSV...")
 
     # Open CSV file
     file = open(file_string, "r")
@@ -209,13 +221,13 @@ def read_csv(file_string):
     return header_row, file_rows
 
 
-def read_xlsx(file_string):
-    print("\tReading from Excel spreadsheet...")
-    # TODO: Read xlsx header and content, save them to strings, and return them
+# def read_xlsx(file_string):
+#     print("\tReading from Excel spreadsheet...")
+#     # TODO: Read xlsx header and content, save them to strings, and return them
 
 
 def read_data(file_string, file_type):
-    print("Reading data from input source...")
+    # print("Reading data from input source...")
 
     # Variables to capture the header row and following data
     header = ""
@@ -224,8 +236,8 @@ def read_data(file_string, file_type):
     # Check which file type to read from
     if file_type == "csv":
         header, file_rows = read_csv(file_string)
-    elif file_type == "xlsx":
-        header, file_rows = read_xlsx(file_string)
+    # elif file_type == "xlsx":
+    #     header, file_rows = read_xlsx(file_string)
     else:
         print("ERROR: Invalid input file type")
         exit(1)
@@ -236,26 +248,26 @@ def read_data(file_string, file_type):
     return header, file_rows
 
 
-def write_list_to_csv(list: list, csv_file: str):
-    with open(csv_file, "a", newline="") as file:
-        writer = csv.writer(file, delimiter=",", lineterminator="\n")
-        writer.writerow(list)
+def write_list_to_csv(list: list, csv_file):
+    """
+    Appends a line from a list to a given CSV file
+
+    :param list: a list that will be appended as a line in the given CSV
+    :param csv_file: an open CSV file object
+    """
+    writer = csv.writer(csv_file, delimiter=",", lineterminator="\n")
+    writer.writerow(list)
 
 
-def write_string_to_csv(line: str, csv_file: str):
-    with open(csv_file, "a", newline="") as file:
-        writer = csv.writer(file, delimiter=",", lineterminator="\n")
-        writer.writerow(line.split(","))
+def write_string_to_csv(line: str, csv_file):
+    """
+    Appends a line from a string to a given CSV file
 
-
-def remove_blank_rows(out_file):
-    header, rows = read_csv(out_file)
-
-    write_list_to_csv(header, out_file)
-
-    for line in rows:
-        if line != "\n":
-            write_string_to_csv(line, out_file)
+    :param line: a string that will be appended as a line in the given CSV
+    :param csv_file: an open CSV file object
+    """
+    writer = csv.writer(csv_file, delimiter=",", lineterminator="\n")
+    writer.writerow(line.split(","))
 
 
 def get_row_value_by_column(header: list, row: list, column_name: str):
@@ -284,7 +296,9 @@ def gen_output(
     """
 
     # Create rows of formatted data and append to output csv
-    print("Generating output data...")
+
+    output_file = open(output_file, "w", newline="")
+    # print("Generating output data...")
     # Print header row
     write_list_to_csv(output_header, output_file)
 
@@ -455,13 +469,13 @@ def gen_output(
                 # print(out_row)
 
             row_count += 1
-            print_over_line("\t" + str(row_count))
-    print()
+            # print_over_line("\t" + str(row_count))
+    # print()
 
 
 def main():
     # Intro
-    print("iNaturalist Pipeline -----------------------")
+    # print("iNaturalist Pipeline -----------------------")
 
     # I/O variables
     input_file = ""
@@ -477,16 +491,16 @@ def main():
     ) = parse_cmd_line()
 
     # Pipeline Description
-    print("\tInput path:\t", input_file)
-    print("\tInput name:\t", input_file_name)
-    print("\tInput type:\t", input_file_type)
-    print("\tOutput path:\t", output_file)
-    print()
+    # print("\tInput path:\t", input_file)
+    # print("\tInput name:\t", input_file_name)
+    # print("\tInput type:\t", input_file_type)
+    # print("\tOutput path:\t", output_file)
+    # print()
+    # print()
 
     # Choose which file reading function to call
     input_header, input_rows = read_data(input_file, input_file_type)
 
-    print()
     # Sort columns before writing output
     output_header = [
         "Observation No.",
@@ -524,7 +538,8 @@ def main():
 
     # Create output data
     gen_output(output_header, output_file, input_header, input_rows)
-    print()
+    # print()
+    sys.stdout.writelines(output_file)
 
 
 if __name__ == "__main__":
