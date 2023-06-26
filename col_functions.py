@@ -3,7 +3,6 @@ import os
 import sys
 import csv
 import json
-import requests
 
 
 # 'Eval' functions are called from the merge_tables function to evaluate the
@@ -546,25 +545,83 @@ def read_elevation_csv(elevation_file, lat, long):
     return ""
 
 
-def format_elevation(lat, long):
-    """
-    Checks for elevation based on the 'data/elevations.csv' reference file.
-    New reference entries are no longer added, as they were previously generated
-    by the Bing Maps API (now removed from this script), but can be input manually.
+def read_hgt(file_path: str, latitude: str, longitude: str):
+    with open(file_path, "rb") as file:
+        latitude_decimal_part = float(latitude) - int(float(latitude))
+        # Convert from decimal to arcseconds (each column is an arcsecond)
+        row = int(latitude_decimal_part * 3600) % 3600
+        # Take the complement of the row because files are read from top to bottom
+        row = 3601 - row
 
-    :param lat: latitude to find the elevation
-    :param long: longitude to find the elevation
+        longitude_decimal_part = float(longitude) - int(float(longitude))
+        # Convert from decimal to arcseconds (each row is an arcsecond)
+        column = int(longitude_decimal_part * 3600) % 3600
+
+        # Skip to the desired row in the input stream
+        # There are 3601 columns per row because the edges of the data files overlap
+        # Each data point is 2-bytes and the data is in row-major order
+        # Subtract 1 from the row so it doesn't skip the desired row
+        file.seek((2 * 3601 * (row - 1)) + (2 * column))
+
+        # Read data point and convert it to an integer
+        # The data is stored in big-endian byte ordering and is signed
+        data_point = file.read(2)
+        data_int = int.from_bytes(data_point, byteorder="big", signed=True)
+        return str(data_int)
+
+
+def format_elevation(latitude: str, longitude: str):
     """
+    Looks up elevation for a given longitude and latitude using data from
+    the Shuttle Radar Topography Mission (SRTMGL1), which is stored in
+    /data/elevation_data/
+
+    The data has 1 arcsecond (~30m) resolution
+
+    :param latitude: latitude to look up
+    :param longitude: longitude to look up
+    """
+
+    # Check that latitude and longitude are provided
+    if latitude == "" or longitude == "" or latitude is None or longitude is None:
+        return "ERROR: latitude and longitude must be provided"
 
     # Establish Variables & Files
-    elevation_file_name = "data/elevations.csv"
+    elevation_data_folder = "data/elevation_data/"
 
-    # Check if the current lat and long have already been calculated
-    csv_result = read_elevation_csv(elevation_file_name, lat, long)
-    if csv_result != "":
-        # A matching set of coordinates was found in results
-        return int(float(csv_result))
-    return 0
+    # Take integer part of given latitude and longitude
+    cardinal_latitude = latitude.split(".")[0]
+    cardinal_longitude = longitude.split(".")[0]
+
+    # Replace sign with cardinal direction
+    if int(cardinal_latitude) < 0:
+        # The data files are named by the southwestern corner of the area they cover.
+        # If the provided latitude is negative (south), we must use the data file for the
+        # next data file to the south, assuming there is a decimal part to the latitude
+        cardinal_latitude = "S" + str(int(cardinal_latitude[1:]) + 1)
+    else:
+        cardinal_latitude = "N" + cardinal_latitude
+
+    if int(cardinal_longitude) < 0:
+        # The data files are named by the southwestern corner of the area they cover
+        # If the provided longitude is negative (west), we must use the data file for the
+        # next data file to the west, assuming there is a decimal part to the longitude
+        cardinal_longitude = "W" + str(int(cardinal_longitude[1:]) + 1)
+    else:
+        cardinal_longitude = "E" + cardinal_longitude
+
+    # Construct the relevant data file path
+    # .hgt is a binary data file format used by SRTM
+    elevation_data_file_path = (
+        elevation_data_folder + cardinal_latitude + cardinal_longitude + ".hgt"
+    )
+
+    if not os.path.isfile(elevation_data_file_path):
+        return "ERROR: elevation data not found"
+
+    elevation = read_hgt(elevation_data_file_path, latitude, longitude)
+
+    return elevation
 
 
 def collection(in_method):

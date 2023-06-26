@@ -429,6 +429,8 @@ def gen_output(
             output_row.append("")
         else:
             elevation = col_functions.format_elevation(latitude, longitude)
+            if elevation.startswith("ERROR"):
+                elevation = ""
             output_row.append(elevation)
 
         # Collection method
