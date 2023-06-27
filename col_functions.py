@@ -139,9 +139,7 @@ def format_date_2(in_date):
         "XI",
         "XIII",
     ]
-
     # months = ['January','February','March','April','May','June','July','August','September','October','November','December']
-
     months = [
         "Jan",
         "Feb",
@@ -158,18 +156,15 @@ def format_date_2(in_date):
     ]
 
     # Check input
-
     if in_date == "" or in_date is None:
         return "", "", "", ""
 
     # # If the string contains 'T' it is a differently formatted date time value
 
     # if 'T' in in_date:
-
     #     print("Found different format:",in_date)
 
     # Start with 2019-06-12T13:26:00-07:00 format
-
     date = in_date.split(" ")
 
     if len(date) < 2:
@@ -177,76 +172,53 @@ def format_date_2(in_date):
 
         if len(date_time) == 2:
             date = date_time[0]
-
             date = date.split("-")
 
             day = date[2]
-
-            # month = date[1]
-
             month = month_numeral[int(date[1]) - 1]
-
             year = date[0]
 
             merge = "-" + day + month
-
             return day, month, year, merge
-
         else:
             return "", "", "", ""
 
     # Check if date was parsed into different format
-
     for index, curr_month in enumerate(months):
-        # if curr_month in in_date:
-
         if in_date.find(curr_month) > 1:
             # print("Found written format:",curr_month," | ",in_date)
 
             date = in_date.split(" ")
-
-            print("split date:", date)
+            # print("split date:", date)
 
             day = date[0]
-
             month = month_numeral[index]
-
             year = date[2]
 
             merge = "-" + day + month
-
             return day, month, year, merge
 
     # If the string can be split in two, it is formatted: 'mm/dd/yy hh:mm'
 
     # date[0] is the date, date[1] is the time
-
     date = in_date.split(" ")
-
-    print("split date:", date)
+    # print("split date:", date)
 
     if len(date) == 2:
         # should be "5/7/2019 16:45" format
-
         date = date[0].split("/")
 
         day = date[1]
-
         month = month_numeral[int(date[0]) - 1]
-
         year = date[2]
-
     else:
         date = date[0].split("/")
 
         day = date[2]
-
         month = month_numeral[int(date[1]) - 1]
-
         year = date[0]
 
     merge = "-" + day + month
-
     return day, month, year, merge
 
 
@@ -283,48 +255,37 @@ def format_time_2(in_time):
     # print('in_time 2:' + in_time)
 
     # Check input
-
     if in_time == "" or in_time is None:
         return ""
 
     # Start with 2019-06-12T13:26:00-07:00 format
 
     time = in_time.split(" ")
-
     if len(time) < 2:
         date_time = in_time.split("T")
 
         if len(date_time) == 2:
             time = date_time[1]
-
             time = time.split("-")
 
             return time[0]
-
         else:
             return ""
 
     # Check if date was parsed into different format
-
     for index, curr_month in enumerate(months):
-        # if curr_month in in_date:
-
         if in_time.find(curr_month) > 1:
             time = in_time.split(" ")
-
             return time[3]
 
     # If the string can be split in two, it is formatted: 'mm/dd/yy hh:mm'
 
     # date[0] is the date, date[1] is the time
-
     time = in_time.split(" ")
 
     if len(time) == 2:
         # should be "5/7/2019 16:45" format
-
         return time[1]
-
     elif len(time) == 4:
         returnTime = ""
 
@@ -332,14 +293,12 @@ def format_time_2(in_time):
             reformattedTime = time[1].split(":")
 
             hour = int(reformattedTime[0])
-
             if hour < 12:
                 hour = hour + 12
 
             minute = reformattedTime[1]
 
             returnTime = str(hour) + ":" + minute
-
         else:
             returnTime = time[1]
 
@@ -465,84 +424,11 @@ def format_location_guess(address):
     return ""
 
 
-def specimen_id(specimen_id_str):
-    if specimen_id_str is None:
-        return " "
-
-    if specimen_id_str != "":
-        if specimen_id_str[0].isalpha():
-            return "NOT INT"
-
-        else:
-            return specimen_id_str
-
-
 def format_coordinate(coordinate):
     if coordinate is None or coordinate == "":
         return ""
 
     return "{:.4f}".format(float(coordinate))
-
-
-def write_elevation_res(elevation_file, lat, long, elevation):
-    lat_rounded = "%.2f" % (float(lat))
-
-    long_rounded = "%.2f" % (float(long))
-
-    line_to_print = str(lat_rounded), str(long_rounded), str(elevation)
-
-    # New System:
-
-    # Check if file has been created: Elevations/input_file_elevation.csv
-
-    # Write file or Append file based on this
-
-    if not os.path.exists(elevation_file):
-        with open(elevation_file, "w") as file:
-            # file.write(line_to_print)
-
-            writer = csv.writer(file)
-
-            writer.writerow(line_to_print)
-
-    else:
-        with open(elevation_file, "a") as file:
-            writer = csv.writer(file)
-
-            writer.writerow(line_to_print)
-
-    # Old System:
-
-    # Always append results to same master file
-
-    # with open(elevation_file, 'a') as f:
-
-    #    writer = csv.writer(f)
-
-    #    writer.writerow(line_to_print)
-
-
-def read_elevation_csv(elevation_file, lat, long):
-    # Create more matches by simplifying coordinates
-
-    # print(lat,long)
-
-    lat_rounded = "%.2f" % (float(lat))
-
-    long_rounded = "%.2f" % (float(long))
-
-    with open(elevation_file) as csv_file:
-        csv_reader = csv.reader(csv_file, delimiter=",")
-
-        for row in csv_reader:
-            if (
-                len(row) > 1
-                and str(row[0]) == lat_rounded
-                and str(row[1]) == long_rounded
-            ):
-                return row[2]
-
-    return ""
 
 
 def read_hgt(file_path: str, latitude: str, longitude: str):
@@ -624,15 +510,13 @@ def format_elevation(latitude: str, longitude: str):
     return elevation
 
 
-def collection(in_method):
-    in_method_array = in_method.split(" ")
+# def collection(in_method):
+#     in_method_array = in_method.split(" ")
 
-    if len(in_method_array) > 1:
-        if in_method_array[0] == "blue":
-            return "vane"
-
-        else:
-            return in_method_array[0]
-
-    else:
-        return in_method
+#     if len(in_method_array) > 1:
+#         if in_method_array[0] == "blue":
+#             return "vane"
+#         else:
+#             return in_method_array[0]
+#     else:
+#         return in_method

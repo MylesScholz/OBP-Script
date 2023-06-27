@@ -19,8 +19,8 @@ currentDate=`date`
 #   The project ID will appear in the URL
 declare -A sources=(
     ["Oregon Bee Atlas (Plant Images/SampleID)"]=18521
-    # ["Master Melittologist (outside of Oregon)"]=99706
-    # ["Washington Bee Atlas (WaBA): Plant images/Sample IDs"]=166376
+    ["Master Melittologist (outside of Oregon)"]=99706
+    ["Washington Bee Atlas (WaBA): Plant images/Sample IDs"]=166376
 );
 
 #Parse command line arguments
