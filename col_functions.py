@@ -19,37 +19,42 @@ import json
 def format_user_name(user_login: str, user_full_name: str):
     user_first_name = user_first_initial = user_last_name = ""
 
-    if user_full_name != "":
+    # Check usernames.csv for manually entered name
+    with open("data/usernames.csv", "r", encoding="utf-8", errors="replace") as file:
+        for row in file:
+            # Remove trailing characters and split line into array
+            row = row.rstrip("\r\n")
+            row = row.split(",")
+
+            if row[1] == user_login:
+                user_full_name_split = row[0].split(" ")
+                # User first name has caveats as below
+                user_first_name = user_full_name_split[0]
+                user_first_initial = user_first_name[0] + "."
+
+                # User last name has caveats as below
+                user_last_name = user_full_name_split[-1]
+
+    # If name still unassigned, check user_full_name (from iNaturalist)
+    if (
+        user_first_name == ""
+        and user_first_initial == ""
+        and user_last_name == ""
+        and user_full_name != ""
+    ):
         user_full_name_split = user_full_name.split(" ")
 
         # User first name assumed to be the first space-separated word in their full name
         # This will not capture middle names or compound first names (e.g., Mary Jo)
-        user_first_name = user_full_name_split[0]
-        user_first_initial = user_first_name[0] + "."
+        if user_first_name == "":
+            user_first_name = user_full_name_split[0]
+            user_first_initial = user_first_name[0] + "."
 
         # User last name assumed to be the last space-separated word in their full name
         # This will not capture middle names or compound last names (e.g., van Horn)
         # If there is only one name provided, the last name will be empty
-        if len(user_full_name_split) > 1:
+        if len(user_full_name_split) > 1 and user_last_name == "":
             user_last_name = user_full_name_split[-1]
-    else:
-        # user_full_name not provided in pulled data, so check usernames.csv
-        with open(
-            "data/usernames.csv", "r", encoding="utf-8", errors="replace"
-        ) as file:
-            for row in file:
-                # Remove trailing characters and split line into array
-                row = row.rstrip("\r\n")
-                row = row.split(",")
-
-                if row[1] == user_login:
-                    user_full_name_split = row[0].split(" ")
-                    # User first name has caveats as above
-                    user_first_name = user_full_name_split[0]
-                    user_first_initial = user_first_name[0] + "."
-
-                    # User last name has caveats as above
-                    user_last_name = user_full_name_split[-1]
 
     return user_first_name, user_first_initial, user_last_name
 
@@ -305,27 +310,18 @@ def format_time_2(in_time):
         return returnTime
 
     # # Check input
-
     # if in_time == '' or in_time is None:
-
     #     return ''
 
     # # If the string can be split in two, it is formatted: 'mm/dd/yy hh:mm'
-
     # # in_time[0] is the date, in_time[1] is the time
-
     # in_time = in_time.split(' ')
 
     # if len(in_time) == 2:
-
     #     in_time = in_time[1]
-
     #     in_time = in_time[0] + ":" + in_time[1]
-
     # #else:
-
     # #    in_time = in_time[0].split(' ')
-
     # #    in_time = in_time[1]
 
     # return in_time
