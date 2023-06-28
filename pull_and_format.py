@@ -66,7 +66,6 @@ def main():
                         current_date, source
                     )
                 )
-            input("Type Enter to close...")
             exit(completed_process.returncode)
 
         print("Formatting '{}' observations => Done!".format(source))
@@ -75,8 +74,6 @@ def main():
         log_file.write(
             "SUCCESS - Pulled and formatted data on {}\n".format(current_date)
         )
-
-    input("Type Enter to close...")
 
 
 if __name__ == "__main__":
