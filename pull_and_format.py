@@ -72,7 +72,9 @@ def main():
         print("Formatting '{}' observations => Done!".format(source))
 
     with open("logFile.txt", "a") as log_file:
-        log_file.write("SUCCESS - Pulled and formatted data on {}".format(current_date))
+        log_file.write(
+            "SUCCESS - Pulled and formatted data on {}\n".format(current_date)
+        )
 
     input("Type Enter to close...")
 
