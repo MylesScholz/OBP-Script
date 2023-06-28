@@ -88,7 +88,15 @@ def merge_files(base_file_path: str, append_file_path: str, output_file_path: st
     if output_file_path == "":
         output_file_path = base_file_path
 
-    # TODO: merging
+    # TODO:
+    # 1.    Read base file into memory (csv.DictReader())
+    # 2.    Open append file
+    # 3.    For line in append file,
+    # 3.1.      Search base file (linearly) for line using keys
+    #           (iNaturalist Alias, Sample ID, Specimen ID, Collection Day 1, Month 1, and Year 1)
+    # 3.2.      If line in base file, update empty fields
+    # 3.3.      Else, append line to base data
+    # 4.    Write updated base data to output file
 
     return output_file_path
 
