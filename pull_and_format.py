@@ -1,6 +1,7 @@
 # Runs iNaturalist_DataPull.py and format_data.py for all given iNaturalist projects
 import subprocess
 import datetime
+import locale
 
 
 def main():
@@ -27,6 +28,7 @@ def main():
             ],
             shell=True,
             capture_output=True,
+            encoding=locale.getpreferredencoding(),
         )
         result = completed_process.stdout
 
@@ -53,6 +55,7 @@ def main():
             ],
             shell=True,
             capture_output=True,
+            encoding=locale.getpreferredencoding(),
         )
 
         if completed_process.returncode != 0:
