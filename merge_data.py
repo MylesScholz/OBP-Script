@@ -5,6 +5,42 @@
 
 import sys
 import os
+import csv
+
+
+FORMATTED_HEADER = [
+    "Observation No.",
+    "Voucher No.",
+    "iNaturalist ID",
+    "iNaturalist Alias",
+    "Collector - First Name",
+    "Collector - First Name Initial",
+    "Collector - Last Name",
+    "Sample ID",
+    "Specimen ID",
+    "Collection Day 1",
+    "Month 1",
+    "Year 1",
+    "Time 1",
+    "Collection Day 2",
+    "Month 2",
+    "Year 2",
+    "Time 2",
+    "Country",
+    "State",
+    "County",
+    "Location",
+    "Collection Site Description",
+    "Abbreviated Location",
+    "Dec. Lat.",
+    "Dec. Long.",
+    "Lat/Long Accuracy",
+    "Elevation",
+    "Collection method",
+    "Associated plant - family",
+    "Associated plant - species",
+    "Associated plant - Inaturalist URL",
+]
 
 
 def parse_command_line():
@@ -68,11 +104,39 @@ def parse_command_line():
     return base_file_path, append_file_path, output_file_path
 
 
-def merge_files(base_file_path: str, append_file_path: str, output_file_path: str):
+def compare_rows(row1: dict, row2: dict):
+    if (
+        row1["iNaturalist Alias"] == row2["iNaturalist Alias"]
+        and row1["Sample ID"] == row2["Sample ID"]
+        and row1["Specimen ID"] == row2["Specimen ID"]
+        and row1["Collection Day 1"] == row2["Collection Day 1"]
+        and row1["Month 1"] == row2["Month 1"]
+        and row1["Year 1"] == row2["Year 1"]
+    ):
+        return True
+
+    return False
+
+
+def search_data_for_row(data: list, row: dict):
+    # Set default return value to -1 (row not found in data)
+    index = -1
+
+    # Search the data linearly
+    for i, entry in enumerate(data):
+        # Check if all keys match
+        if compare_rows(entry, row):
+            # Record the index and break the loop
+            index = i
+            break
+
+    return index
+
+
+def merge_files(base_file_path: str, append_file_path: str, output_file_path=""):
     """
     Merges files with formatted iNaturalist data into a single sorted and indexed data file
-
-    Assumes the provided files are sorted by date and time of observation (results of format_data.py should be)
+    WARNING: overwrites output file
     """
 
     if (
@@ -88,15 +152,38 @@ def merge_files(base_file_path: str, append_file_path: str, output_file_path: st
     if output_file_path == "":
         output_file_path = base_file_path
 
-    # TODO:
-    # 1.    Read base file into memory (csv.DictReader())
-    # 2.    Open append file
-    # 3.    For line in append file,
-    # 3.1.      Search base file (linearly) for line using keys
-    #           (iNaturalist Alias, Sample ID, Specimen ID, Collection Day 1, Month 1, and Year 1)
-    # 3.2.      If line in base file, update empty fields
-    # 3.3.      Else, append line to base data
-    # 4.    Write updated base data to output file
+    try:
+        # Read base data from base_file_path into memory
+        with open(base_file_path, newline="") as base_file:
+            base_data = list(csv.DictReader(base_file))
+        # Read data to append from append_file_path into memory
+        with open(append_file_path, newline="") as append_file:
+            append_data = list(csv.DictReader(append_file))
+
+        # Loop through the data to append, checking for duplicates and updates
+        for row in append_data:
+            # Search for current row in base data (using keys)
+            index = search_data_for_row(base_data, row)
+
+            if index == -1:
+                # The current row is new; append it to the base data
+                base_data.append(row)
+            else:
+                # Fill in empty columns in the base data with values from the current row
+                for column in row:
+                    if base_data[index][column] == "" and row[column] != "":
+                        base_data[index][column] = row[column]
+
+        # TODO: index data
+
+        # Write updated base data to output file
+        with open(output_file_path, "w", newline="") as output_file:
+            csv_writer = csv.DictWriter(output_file, fieldnames=FORMATTED_HEADER)
+            csv_writer.writeheader()
+            csv_writer.writerows(base_data)
+    except OSError as e:
+        print("ERROR: could not open '{}'".format(e.filename))
+        exit(1)
 
     return output_file_path
 
