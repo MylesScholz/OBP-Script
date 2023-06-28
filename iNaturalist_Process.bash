@@ -11,6 +11,7 @@ currentDate=`date`
 #Dictionary of sources to pull data from.
 #Keys: project titles
 #Values: project IDs
+#Project titles do not need to be exact
 #Project IDs can be found from https://www.inaturalist.org/observations/identify
 #   Click "Filters"
 #   Click "More Filters"

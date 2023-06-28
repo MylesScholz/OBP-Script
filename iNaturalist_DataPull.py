@@ -428,8 +428,8 @@ def parse_cmd_line():
     # Ensure year is in correct format
     if yearArg:
         currentYear = datetime.datetime.now().year
-        if year.isnumeric() and int(year) >= currentYear:
-            print("ERROR: Year argument must be less than current year")
+        if year.isnumeric() and int(year) > currentYear:
+            print("ERROR: Year argument must be less than or equal to current year")
             exit(1)
         elif not year.isnumeric() or len(year) != 4:
             print(

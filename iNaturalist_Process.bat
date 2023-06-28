@@ -1,5 +1,7 @@
-@REM Run bash scrip from task scheduler
+@REM Run bash script from task scheduler
 c:
 cd /d %~dp0
-bash -c "./iNaturalist_Process.bash"
+
+set /p input=Year to Query: 
+bash -c "./iNaturalist_Process.bash --year %input%"
 pause

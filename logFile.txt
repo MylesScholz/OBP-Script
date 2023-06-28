@@ -71,3 +71,5 @@ SUCCESS - Pulled and formatted data on Sat 24 Jun 2023 03:51:14 PM PDT
 SUCCESS - Pulled and formatted data on Sat 24 Jun 2023 04:01:49 PM PDT
 SUCCESS - Pulled and formatted data on Mon 26 Jun 2023 03:47:38 PM PDT
 SUCCESS - Pulled and formatted data on Mon 26 Jun 2023 04:06:30 PM PDT
+ERROR - ERROR: Year argument must be less than current year - on Wed 28 Jun 2023 12:01:57 PM PDT when retrieving 'Oregon Bee Atlas (Plant Images/SampleID)' observations
+ERROR - on Wed 28 Jun 2023 12:03:46 PM PDT when formatting 'Oregon Bee Atlas (Plant Images/SampleID)' observations

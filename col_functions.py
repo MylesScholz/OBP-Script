@@ -506,13 +506,13 @@ def format_elevation(latitude: str, longitude: str):
     return elevation
 
 
-# def collection(in_method):
-#     in_method_array = in_method.split(" ")
+def collection(in_method):
+    in_method_array = in_method.split(" ")
 
-#     if len(in_method_array) > 1:
-#         if in_method_array[0] == "blue":
-#             return "vane"
-#         else:
-#             return in_method_array[0]
-#     else:
-#         return in_method
+    if len(in_method_array) > 1:
+        if in_method_array[0] == "blue":
+            return "vane"
+        else:
+            return in_method_array[0]
+    else:
+        return in_method
