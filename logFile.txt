@@ -73,3 +73,9 @@ SUCCESS - Pulled and formatted data on Mon 26 Jun 2023 03:47:38 PM PDT
 SUCCESS - Pulled and formatted data on Mon 26 Jun 2023 04:06:30 PM PDT
 ERROR - ERROR: Year argument must be less than current year - on Wed 28 Jun 2023 12:01:57 PM PDT when retrieving 'Oregon Bee Atlas (Plant Images/SampleID)' observations
 ERROR - on Wed 28 Jun 2023 12:03:46 PM PDT when formatting 'Oregon Bee Atlas (Plant Images/SampleID)' observations
+ERROR - on 2023-06-28 13:09:26.521644 when formatting 'Oregon Bee Atlas (Plant Images/SampleID)' observations
+ERROR - on 2023-06-28 13:09:26.521644 when formatting 'Master Melittologist (outside of Oregon)' observations
+ERROR - on 2023-06-28 13:09:26.521644 when formatting 'Washington Bee Atlas (WaBA): Plant images/Sample IDs' observations
+ERROR - on 2023-06-28 13:27:40.111277 when retrieving 'Oregon Bee Atlas (Plant Images/SampleID)' observations
+ERROR - on 2023-06-28 13:29:13.999365 when retrieving 'Oregon Bee Atlas (Plant Images/SampleID)' observations
+ERROR - on 2023-06-28 13:29:48.858384 when retrieving 'Oregon Bee Atlas (Plant Images/SampleID)' observations
