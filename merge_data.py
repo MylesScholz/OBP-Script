@@ -136,6 +136,9 @@ def search_data_for_row(data: list, row: dict):
 def merge_files(base_file_path: str, append_file_path: str, output_file_path=""):
     """
     Merges files with formatted iNaturalist data into a single sorted and indexed data file
+    Assumes that the base file is sorted by Observation No. and there are no gaps in
+    Observation Nos., unless the field is entirely empty
+
     WARNING: overwrites output file
     """
 
