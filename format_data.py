@@ -13,9 +13,10 @@ import string
 import errno
 import csv
 import io
-import openpyxl
-from openpyxl import load_workbook
-from openpyxl import Workbook
+
+# import openpyxl
+# from openpyxl import load_workbook
+# from openpyxl import Workbook
 
 # Local imports
 import col_functions
