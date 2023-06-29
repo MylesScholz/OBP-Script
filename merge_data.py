@@ -6,7 +6,6 @@
 import sys
 import os
 import csv
-import operator
 import functools
 
 
@@ -71,7 +70,7 @@ def parse_command_line():
     return base_file_path, append_file_path, output_file_path
 
 
-def compare_rows(row1: dict, row2: dict):
+def equal_identifiers(row1: dict, row2: dict):
     if (
         row1["iNaturalist Alias"] == row2["iNaturalist Alias"]
         and row1["Sample ID"] == row2["Sample ID"]
@@ -92,7 +91,7 @@ def search_data_for_row(data: list, row: dict):
     # Search the data linearly
     for i, entry in enumerate(data):
         # Check if all keys match
-        if compare_rows(entry, row):
+        if equal_identifiers(entry, row):
             # Record the index and break the loop
             index = i
             break
@@ -100,19 +99,115 @@ def search_data_for_row(data: list, row: dict):
     return index
 
 
-def compare_rows_by_observation_no(row1: str, row2: str):
-    observation_no_1 = row1["Observation No."]
-    observation_no_2 = row2["Observation No."]
-
-    # Treat blank observation numbers as the largest value
-    if observation_no_1 == "" and observation_no_2 != "":
+def compare_numerical_string(string1: str, string2: str):
+    # Treat an empty string as the largest value
+    if string1 == "" and string2 != "":
         return 1
-    if observation_no_2 == "" and observation_no_1 != "":
+    if string2 == "" and string1 != "":
+        return -1
+    if string1 == "" and string2 == "":
+        return 0
+
+    # At this point, both strings have content
+    # Try converting to integers to compare
+    try:
+        number1 = int(string1)
+        number2 = int(string2)
+
+        return (number1 > number2) - (number1 < number2)
+    except:
+        # Converting to integers failed, so just compare as strings
+        return (string1 > string2) - (string1 < string2)
+
+
+def compare_string(string1, string2):
+    # Treat an empty string as the largest value
+    if string1 == "" and string2 != "":
+        return 1
+    if string2 == "" and string1 != "":
         return -1
 
-    # At this point, either both are blank or both are numbers.
-    # Either way, they can be compared directly (with a fancy trick!)
-    return (observation_no_1 > observation_no_2) - (observation_no_1 < observation_no_2)
+    # At this point, either both are blank or both have content.
+    # Either way, they can be compared directly
+    return (string1 > string2) - (string1 < string2)
+
+
+def compare_month(month1: str, month2: str):
+    # Treat empty strings as the largest value
+    if month1 == "" and month2 != "":
+        return 1
+    if month2 == "" and month1 != "":
+        return -1
+    if month1 == "" and month2 == "":
+        return 0
+
+    months = {
+        "I": 1,
+        "II": 2,
+        "III": 3,
+        "IV": 4,
+        "V": 5,
+        "VI": 6,
+        "VII": 7,
+        "VIII": 8,
+        "IX": 9,
+        "X": 10,
+        "XI": 11,
+        "XII": 12,
+    }
+
+    return (months[month1] > months[month2]) - (months[month1] < months[month2])
+
+
+def compare_rows(row1: dict, row2: dict):
+    # First, compare "Observation No."
+    observation_no_comparison = compare_numerical_string(
+        row1["Observation No."], row2["Observation No."]
+    )
+    if observation_no_comparison != 0:
+        return observation_no_comparison
+
+    # Second, compare "Collector - Last Name"
+    last_name_comparison = compare_string(
+        row1["Collector - Last Name"], row2["Collector - Last Name"]
+    )
+    if last_name_comparison != 0:
+        return last_name_comparison
+
+    # Third, compare "Collector - First Name"
+    first_name_comparison = compare_string(
+        row1["Collector - First Name"], row2["Collector - First Name"]
+    )
+    if first_name_comparison != 0:
+        return first_name_comparison
+
+    # Fourth, compare "Month 1"
+    month_comparison = compare_month(row1["Month 1"], row2["Month 1"])
+    if month_comparison != 0:
+        return month_comparison
+
+    # Fifth, compare "Collection Day 1"
+    day_comparison = compare_numerical_string(
+        row1["Collection Day 1"], row2["Collection Day 1"]
+    )
+    if day_comparison != 0:
+        return day_comparison
+
+    # Sixth, compare "Sample ID"
+    sample_id_comparison = compare_numerical_string(
+        row1["Sample ID"], row2["Sample ID"]
+    )
+    if sample_id_comparison != 0:
+        return sample_id_comparison
+
+    # Seventh, compare "Specimen ID"
+    specimen_id_comparison = compare_numerical_string(
+        row1["Specimen ID"], row2["Specimen ID"]
+    )
+    if specimen_id_comparison != 0:
+        return specimen_id_comparison
+
+    return 0
 
 
 def merge_files(base_file_path: str, append_file_path: str, output_file_path=""):
@@ -162,24 +257,8 @@ def merge_files(base_file_path: str, append_file_path: str, output_file_path="")
 
         # Sort and index the merged data (base_data)
 
-        # First, sort by secondary keys (in order)
-        #   Python's list.sort() is stable, so this ordering will be preserved as a
-        #   subsorting
-        base_data.sort(
-            key=operator.itemgetter(
-                "Collector - Last Name",
-                "Collector - First Name",
-                "Month 1",
-                "Collection Day 1",
-                "Sample ID",
-                "Specimen ID",
-            )
-        )
-        # Second, sort by primary key (observation number)
-        #   This is done separately because, by default, Python treats empty strings as
-        #   the lowest value. We need empty strings at the end of the list. Hence, the
-        #   custom comparison function.
-        base_data.sort(key=functools.cmp_to_key(compare_rows_by_observation_no))
+        # Sort with a custom comparison function
+        base_data.sort(key=functools.cmp_to_key(compare_rows))
 
         # TODO: index the sorted data
 

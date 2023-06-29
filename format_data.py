@@ -528,7 +528,7 @@ def main():
         "iNaturalist ID",
         "iNaturalist Alias",
         "Collector - First Name",
-        "Collector - First Name Initial",
+        "Collector - First Initial",
         "Collector - Last Name",
         "Sample ID",
         "Specimen ID",
@@ -552,7 +552,7 @@ def main():
         "Elevation",
         "Collection method",
         "Associated plant - family",
-        "Associated plant - species",
+        "Associated plant - genus, species",
         "Associated plant - Inaturalist URL",
     ]
 
