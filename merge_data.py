@@ -6,41 +6,8 @@
 import sys
 import os
 import csv
-
-
-FORMATTED_HEADER = [
-    "Observation No.",
-    "Voucher No.",
-    "iNaturalist ID",
-    "iNaturalist Alias",
-    "Collector - First Name",
-    "Collector - First Name Initial",
-    "Collector - Last Name",
-    "Sample ID",
-    "Specimen ID",
-    "Collection Day 1",
-    "Month 1",
-    "Year 1",
-    "Time 1",
-    "Collection Day 2",
-    "Month 2",
-    "Year 2",
-    "Time 2",
-    "Country",
-    "State",
-    "County",
-    "Location",
-    "Collection Site Description",
-    "Abbreviated Location",
-    "Dec. Lat.",
-    "Dec. Long.",
-    "Lat/Long Accuracy",
-    "Elevation",
-    "Collection method",
-    "Associated plant - family",
-    "Associated plant - species",
-    "Associated plant - Inaturalist URL",
-]
+import operator
+import functools
 
 
 def parse_command_line():
@@ -133,11 +100,25 @@ def search_data_for_row(data: list, row: dict):
     return index
 
 
+def compare_rows_by_observation_no(row1: str, row2: str):
+    observation_no_1 = row1["Observation No."]
+    observation_no_2 = row2["Observation No."]
+
+    # Treat blank observation numbers as the largest value
+    if observation_no_1 == "" and observation_no_2 != "":
+        return 1
+    if observation_no_2 == "" and observation_no_1 != "":
+        return -1
+
+    # At this point, either both are blank or both are numbers.
+    # Either way, they can be compared directly (with a fancy trick!)
+    return (observation_no_1 > observation_no_2) - (observation_no_1 < observation_no_2)
+
+
 def merge_files(base_file_path: str, append_file_path: str, output_file_path=""):
     """
     Merges files with formatted iNaturalist data into a single sorted and indexed data file
-    Assumes that the base file is sorted by Observation No. and there are no gaps in
-    Observation Nos., unless the field is entirely empty
+    Assumes base file and file to append are CSVs with the same headers
 
     WARNING: overwrites output file
     """
@@ -163,6 +144,8 @@ def merge_files(base_file_path: str, append_file_path: str, output_file_path="")
         with open(append_file_path, newline="") as append_file:
             append_data = list(csv.DictReader(append_file))
 
+        header = base_data[0].keys()
+
         # Loop through the data to append, checking for duplicates and updates
         for row in append_data:
             # Search for current row in base data (using keys)
@@ -177,11 +160,32 @@ def merge_files(base_file_path: str, append_file_path: str, output_file_path="")
                     if base_data[index][column] == "" and row[column] != "":
                         base_data[index][column] = row[column]
 
-        # TODO: index data
+        # Sort and index the merged data (base_data)
+
+        # First, sort by secondary keys (in order)
+        #   Python's list.sort() is stable, so this ordering will be preserved as a
+        #   subsorting
+        base_data.sort(
+            key=operator.itemgetter(
+                "Collector - Last Name",
+                "Collector - First Name",
+                "Month 1",
+                "Collection Day 1",
+                "Sample ID",
+                "Specimen ID",
+            )
+        )
+        # Second, sort by primary key (observation number)
+        #   This is done separately because, by default, Python treats empty strings as
+        #   the lowest value. We need empty strings at the end of the list. Hence, the
+        #   custom comparison function.
+        base_data.sort(key=functools.cmp_to_key(compare_rows_by_observation_no))
+
+        # TODO: index the sorted data
 
         # Write updated base data to output file
         with open(output_file_path, "w", newline="") as output_file:
-            csv_writer = csv.DictWriter(output_file, fieldnames=FORMATTED_HEADER)
+            csv_writer = csv.DictWriter(output_file, fieldnames=header)
             csv_writer.writeheader()
             csv_writer.writerows(base_data)
     except OSError as e:
