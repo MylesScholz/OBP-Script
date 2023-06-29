@@ -120,15 +120,16 @@ def parse_cmd_line():
     # Input path:
     # data/folder_name/file_name
 
-    # The input file must be kept in data dir
-    if input_path.split("/")[0] != "data":
-        print("ERROR: --input file must be saved inside the 'data' directory")
-        exit(1)
-
     # Parse input file and input file type
     input_path_split = input_path.split("/")
     input_file = input_path_split[-1]
 
+    # The input file must be kept in data dir
+    if input_path_split[0] != "data":
+        print("ERROR: --input file must be saved inside the 'data' directory")
+        exit(1)
+
+    # Separate the input file into file name and extension (file type)
     input_file_split = input_file.split(".")
     input_file_name = input_file_split[0]
     input_file_type = input_file_split[1]
@@ -148,11 +149,21 @@ def parse_cmd_line():
 
     # If output was not specified, use the input folder name
     if output_path == "":
-        # We will use the split file path components
+        # Get the input folder name
+        input_folder = input_path_split[-2]
+
+        # Get the source abbreviation prefix from the input folder name
+        source_abbreviation = ""
+        input_folder_split = input_folder.split("_")
+        if input_folder_split[0].isalpha():
+            source_abbreviation = input_folder_split[0] + "_"
+
         output_path = (
             "results/"
-            + input_path.split("/")[1]
-            + "/results_"
+            + input_folder
+            + "/"
+            + source_abbreviation
+            + "results_"
             + input_file_year
             + ".csv"
         )
