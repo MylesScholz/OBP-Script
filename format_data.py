@@ -322,10 +322,11 @@ def gen_output(
     for input_row in csv.reader(input_rows, skipinitialspace=True):
         # Init the output row
         output_row = []
-        # Observation No.
-        # Voucher No.
-        output_row.append("")
-        output_row.append("")
+
+        # Add the six blank fields at the start of the formatted output
+        # (Verified, Date Added, Date Label Print, Date Label Sent, Observation No., and Voucher No.)
+        blank_fields = ["" for i in range(6)]
+        output_row.extend(blank_fields)
 
         # iNaturalist ID
         iNaturalist_id = get_row_value_by_column(input_header, input_row, "user_id")
@@ -518,6 +519,10 @@ def main():
 
     # Sort columns before writing output
     output_header = [
+        "Verified",
+        "Date Added",
+        "Date Label Print",
+        "Date Label Sent",
         "Observation No.",
         "Voucher No.",
         "iNaturalist ID",
