@@ -7,6 +7,7 @@ import sys
 import os
 import csv
 import functools
+import datetime
 
 
 def parse_command_line():
@@ -210,6 +211,14 @@ def compare_rows(row1: dict, row2: dict):
     return 0
 
 
+def row_is_empty(row: dict):
+    for column in row:
+        if row[column] != "":
+            return False
+
+    return True
+
+
 def merge_files(base_file_path: str, append_file_path: str, output_file_path=""):
     """
     Merges files with formatted iNaturalist data into a single sorted and indexed data file
@@ -260,7 +269,29 @@ def merge_files(base_file_path: str, append_file_path: str, output_file_path="")
         # Sort with a custom comparison function
         base_data.sort(key=functools.cmp_to_key(compare_rows))
 
-        # TODO: index the sorted data
+        # Search through sorted data backwards to find the last observation number
+        last_observation_no_string = ""
+        last_observation_no_index = -1
+        for i in range(len(base_data) - 1, -1, -1):
+            if base_data[i]["Observation No."] != "":
+                last_observation_no_string = base_data[i]["Observation No."]
+                last_observation_no_index = i
+                break
+
+        if last_observation_no_string != "" and last_observation_no_string.isnumeric():
+            # Convert the observation number to an integer and add one to get the next number
+            last_observation_no = int(last_observation_no_string)
+            next_observation_no = last_observation_no + 1
+        else:
+            # No previous observation number in the base data, so start at zero (plus the year prefix)
+            current_year = str(datetime.datetime.now().year)[2:]
+            next_observation_no = int(current_year + "00000")
+
+        # Add observation numbers sequentially
+        for i in range(last_observation_no_index + 1, len(base_data)):
+            if not row_is_empty(base_data[i]):
+                base_data[i]["Observation No."] = str(next_observation_no)
+                next_observation_no += 1
 
         # Write updated base data to output file
         with open(output_file_path, "w", newline="") as output_file:
