@@ -38,7 +38,6 @@ Det. Volunteer - Family
 Det. Volunteer - Genus
 Det. Volunteer - Species
 Det. Volunteer - Sex/Caste
-Det. LR Best - Family
-Det. LR Best - Genus
+Det LR Best - Genus
 Det. LR Best - Species
-Det. LR Best - Sex/Caste
+Det LR Best - Sex/Caste

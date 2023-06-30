@@ -470,9 +470,9 @@ def gen_output(
 
         # Add the eight blank fields at the end of the formatted output
         # (Det. Volunteer - Family, Det. Volunteer - Genus, Det. Volunteer - Species,
-        #  Det. Volunteer - Sex/Caste, Det. LR Best - Family, Det. LR Best - Genus,
-        #  Det. LR Best - Species, Det. LR Best - Sex/Caste)
-        blank_fields = ["" for i in range(8)]
+        #  Det. Volunteer - Sex/Caste, Det. LR Best - Genus, Det. LR Best - Species,
+        #  Det. LR Best - Sex/Caste)
+        blank_fields = ["" for i in range(7)]
         output_row.extend(blank_fields)
 
         # End of appending to output row
@@ -572,10 +572,9 @@ def main():
     #     "Det. Volunteer - Genus",
     #     "Det. Volunteer - Species",
     #     "Det. Volunteer - Sex/Caste",
-    #     "Det. LR Best - Family",
-    #     "Det. LR Best - Genus",
+    #     "Det LR Best - Genus",
     #     "Det. LR Best - Species",
-    #     "Det. LR Best - Sex/Caste",
+    #     "Det LR Best - Sex/Caste",
     # ]
 
     # Create output data

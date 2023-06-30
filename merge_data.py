@@ -257,7 +257,7 @@ def merge_files(base_file_path: str, append_file_path: str, output_file_path="")
                 for base_column, append_column in zip(base_header, append_header)
             ]
         ):
-            print("ERROR: headers do not match")
+            print("ERROR: base and append file headers do not match")
             exit(1)
 
         # Loop through the data to append, checking for duplicates and updates
