@@ -499,7 +499,9 @@ def format_elevation(latitude: str, longitude: str):
     )
 
     if not os.path.isfile(elevation_data_file_path):
-        return "ERROR: elevation data not found"
+        return "ERROR: elevation data file '{}' not found".format(
+            elevation_data_file_path
+        )
 
     elevation = read_hgt(elevation_data_file_path, latitude, longitude)
 
