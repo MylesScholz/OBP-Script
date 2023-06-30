@@ -244,28 +244,21 @@ def merge_files(base_file_path: str, append_file_path: str, output_file_path="")
         # Read base data from base_file_path into memory
         with open(base_file_path, newline="") as base_file:
             base_data = list(csv.DictReader(base_file))
-        base_header = base_data[0].keys()
-
         # Read data to append from append_file_path into memory
         with open(append_file_path, newline="") as append_file:
-            # Discard header
-            append_file.readline()
+            append_data = list(csv.DictReader(append_file))
 
-            # Read rows using header of the base file
-            # Unexpected results may happen if append file does not have the same
-            # number of headers as base file
-            append_data = list(csv.DictReader(append_file, fieldnames=base_header))
-
-        # Alternative method of confirming header correspondence between base and append files
-        # append_header = append_data[0].keys()
-        # if any(
-        #     [
-        #         base_column != append_column
-        #         for base_column, append_column in zip(base_header, append_header)
-        #     ]
-        # ):
-        #     print("ERROR: headers do not match")
-        #     exit(1)
+        # Confirm header correspondence between base and append files
+        base_header = base_data[0].keys()
+        append_header = append_data[0].keys()
+        if any(
+            [
+                base_column != append_column
+                for base_column, append_column in zip(base_header, append_header)
+            ]
+        ):
+            print("ERROR: headers do not match")
+            exit(1)
 
         # Loop through the data to append, checking for duplicates and updates
         for row in append_data:

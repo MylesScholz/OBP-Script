@@ -10,9 +10,9 @@ def main():
     # Get the current date for logging
     current_date = str(datetime.datetime.now())
 
-    # Read config.txt for the sources (iNaturalist projects) to pull data from
+    # Read config/sources.txt for the sources (iNaturalist projects) to pull data from
     sources = {}
-    with open("config.txt") as config_file:
+    with open("config/sources.txt") as config_file:
         for line in config_file:
             line = line.strip(" \r\n")
             line = line.split(",")
