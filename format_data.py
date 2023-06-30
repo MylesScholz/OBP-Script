@@ -83,7 +83,7 @@ import col_functions
 #     return col_count
 
 
-def parse_cmd_line():
+def parse_command_line():
     # Parse the command line arguments:
     # Determine an input path, output path, and input file type
 
@@ -390,6 +390,9 @@ def gen_output(
         output_row.append(year2)
         output_row.append(time2)
 
+        # Collect Date 2 Merge (blank)
+        output_row.append("")
+
         # Country
         place_country_name = get_row_value_by_column(
             input_header, input_row, "place_country_name"
@@ -465,6 +468,13 @@ def gen_output(
         output_row.append(species)
         output_row.append(url)
 
+        # Add the eight blank fields at the end of the formatted output
+        # (Det. Volunteer - Family, Det. Volunteer - Genus, Det. Volunteer - Species,
+        #  Det. Volunteer - Sex/Caste, Det. LR Best - Family, Det. LR Best - Genus,
+        #  Det. LR Best - Species, Det. LR Best - Sex/Caste)
+        blank_fields = ["" for i in range(8)]
+        output_row.extend(blank_fields)
+
         # End of appending to output row
 
         # Append generated row to output file
@@ -504,7 +514,7 @@ def main():
         input_file_name,
         input_file_type,
         output_file_path,
-    ) = parse_cmd_line()
+    ) = parse_command_line()
 
     # Pipeline Description
     # print("\tInput path:\t", input_file)
@@ -540,6 +550,7 @@ def main():
         "Month 2",
         "Year 2",
         "Time 2",
+        "Collect Date 2 Merge",
         "Country",
         "State",
         "County",
@@ -554,6 +565,14 @@ def main():
         "Associated plant - family",
         "Associated plant - genus, species",
         "Associated plant - Inaturalist URL",
+        "Det. Volunteer - Family",
+        "Det. Volunteer - Genus",
+        "Det. Volunteer - Species",
+        "Det. Volunteer - Sex/Caste",
+        "Det. LR Best - Family",
+        "Det. LR Best - Genus",
+        "Det. LR Best - Species",
+        "Det. LR Best - Sex/Caste",
     ]
 
     # Create output data

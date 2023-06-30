@@ -244,11 +244,28 @@ def merge_files(base_file_path: str, append_file_path: str, output_file_path="")
         # Read base data from base_file_path into memory
         with open(base_file_path, newline="") as base_file:
             base_data = list(csv.DictReader(base_file))
+        base_header = base_data[0].keys()
+
         # Read data to append from append_file_path into memory
         with open(append_file_path, newline="") as append_file:
-            append_data = list(csv.DictReader(append_file))
+            # Discard header
+            append_file.readline()
 
-        header = base_data[0].keys()
+            # Read rows using header of the base file
+            # Unexpected results may happen if append file does not have the same
+            # number of headers as base file
+            append_data = list(csv.DictReader(append_file, fieldnames=base_header))
+
+        # Alternative method of confirming header correspondence between base and append files
+        # append_header = append_data[0].keys()
+        # if any(
+        #     [
+        #         base_column != append_column
+        #         for base_column, append_column in zip(base_header, append_header)
+        #     ]
+        # ):
+        #     print("ERROR: headers do not match")
+        #     exit(1)
 
         # Loop through the data to append, checking for duplicates and updates
         for row in append_data:
@@ -261,7 +278,11 @@ def merge_files(base_file_path: str, append_file_path: str, output_file_path="")
             else:
                 # Fill in empty columns in the base data with values from the current row
                 for column in row:
-                    if base_data[index][column] == "" and row[column] != "":
+                    if (
+                        column in base_header
+                        and base_data[index][column] == ""
+                        and row[column] != ""
+                    ):
                         base_data[index][column] = row[column]
 
         # Sort and index the merged data (base_data)
@@ -295,7 +316,7 @@ def merge_files(base_file_path: str, append_file_path: str, output_file_path="")
 
         # Write updated base data to output file
         with open(output_file_path, "w", newline="") as output_file:
-            csv_writer = csv.DictWriter(output_file, fieldnames=header)
+            csv_writer = csv.DictWriter(output_file, fieldnames=base_header)
             csv_writer.writeheader()
             csv_writer.writerows(base_data)
     except OSError as e:

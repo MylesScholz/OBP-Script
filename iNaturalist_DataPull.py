@@ -391,7 +391,7 @@ def write_to_csv(observation: Observation, fileName: str):
     file.close()
 
 
-def parse_cmd_line():
+def parse_command_line():
     """
     Parse command line arguments, checking for values on --source and --year
     """
@@ -451,7 +451,7 @@ def write_header_to_csv(fileName: str):
 
 
 def main():
-    args = parse_cmd_line()
+    args = parse_command_line()
     dict = get_observations(int(args["source"]), args["year"])
     fileName = prepare_data_file(args["source"], args["year"])
     write_observations(dict, fileName)
