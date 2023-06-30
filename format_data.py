@@ -528,7 +528,7 @@ def main():
     input_header, input_rows = read_data(input_file_path, input_file_type)
 
     # Reader header from config/format_header.csv
-    with open("config/format_header.csv", newline="") as header_file:
+    with open("config/format_header.txt", newline="") as header_file:
         csv_reader = csv.reader(header_file, delimiter="\n")
         output_header = [line[0] for line in csv_reader]
     # output_header = [

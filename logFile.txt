@@ -91,3 +91,6 @@ ERROR - on 2023-06-29 14:45:50.601722 when retrieving 'Oregon Bee Atlas (Plant I
 SUCCESS - Pulled and formatted data on 2023-06-30 10:39:57.203803
 SUCCESS - Pulled and formatted data on 2023-06-30 11:32:58.250122
 SUCCESS - Pulled and formatted data on 2023-06-30 11:52:44.091794
+ERROR - on 2023-06-30 12:42:17.198521 when merging 'test_full_dataset.csv' and 'results/OBA_6_30_23/OBA_results_2023.csv'
+SUCCESS - Merged data on 2023-06-30 12:47:52.559651
+SUCCESS - Merged data on 2023-06-30 13:03:07.970723
