@@ -21,7 +21,7 @@ def main():
             exit(0)
         elif not os.path.isfile(base_file_input):
             print("ERROR: file does not exist")
-        elif base_file_input.split(".")[1] != "csv":
+        elif not base_file_input.endswith(".csv"):
             print("ERROR: file is not a CSV file")
         else:
             base_file_path = os.path.relpath(base_file_input)
@@ -37,31 +37,24 @@ def main():
             exit(0)
         elif not os.path.isfile(append_file_input):
             print("ERROR: file does not exist")
-        elif append_file_input.split(".")[1] != "csv":
+        elif not append_file_input.endswith(".csv"):
             print("ERROR: file is not a CSV file")
         else:
             append_file_path = os.path.relpath(append_file_input)
 
     # Get output file from user
-    print("\nOutput File: the file to write merged data to")
-    print(
-        "\nWARNING: Leaving this blank will overwrite the base file with the merged data!\n"
-    )
-    output_file_input = input(
-        "Enter a relative or absolute file path, including the file extension, or 'q' to quit: "
-    )
-    output_file_input = output_file_input.strip('"')
-    if output_file_input.lower() == "q":
-        exit(0)
-    elif output_file_input != "":
-        try:
-            output_file_path = os.path.relpath(output_file_input)
-            actual_output_file_path = output_file_path
-        except:
-            output_file_path = ""
-            actual_output_file_path = base_file_path
-    else:
-        actual_output_file_path = base_file_path
+    while output_file_path == "":
+        print("\nOutput File: the file to write merged data to")
+        output_file_input = input(
+            "Enter a relative or absolute file path, including the file extension, or 'q' to quit: "
+        )
+        output_file_input = output_file_input.strip('"')
+        if output_file_input.lower() == "q":
+            exit(0)
+        elif output_file_input != "" and output_file_input.endswith(".csv"):
+            output_file_path = output_file_input
+        else:
+            print("ERROR: invalid file path")
 
     # Construct the command to run merge_data.py
     command_args = [
@@ -71,18 +64,13 @@ def main():
         base_file_path,
         "--append",
         append_file_path,
+        "--output",
+        output_file_path,
     ]
-    # If an output file was provided, add the flag and argument to the command
-    if output_file_path == "":
-        actual_output_file_path = base_file_path
-    else:
-        actual_output_file_path = output_file_path
-        command_args.append("--output")
-        command_args.append(output_file_path)
 
     print(
         "Merging '{}' and '{}' into '{}'...".format(
-            base_file_path, append_file_path, actual_output_file_path
+            base_file_path, append_file_path, output_file_path
         )
     )
 
@@ -105,8 +93,8 @@ def main():
 
         with open("logFile.txt", "a") as log_file:
             log_file.write(
-                "ERROR - on {} when merging '{}' and '{}'\n".format(
-                    current_date, base_file_path, append_file_path
+                "ERROR - on {} when merging '{}' and '{}' into '{}'\n".format(
+                    current_date, base_file_path, append_file_path, output_file_path
                 )
             )
         input("Press any key to continue...")
@@ -114,7 +102,7 @@ def main():
 
     print(
         "Merging '{}' and '{}' into '{}' => Done! \n\n".format(
-            base_file_path, append_file_path, actual_output_file_path
+            base_file_path, append_file_path, output_file_path
         )
     )
 
