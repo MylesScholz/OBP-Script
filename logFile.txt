@@ -99,3 +99,6 @@ ERROR - on 2023-06-30 14:36:11.818966 when merging 'test_full_dataset.csv' and '
 SUCCESS - Pulled and formatted data on 2023-06-30 14:36:36.578985
 SUCCESS - Merged data on 2023-06-30 14:39:05.797602
 SUCCESS - Merged data on 2023-06-30 14:41:27.044736
+SUCCESS - Pulled and formatted data on 2023-07-04 15:04:11.985244
+SUCCESS - Pulled and formatted data on 2023-07-04 15:08:38.353930
+SUCCESS - Merged data on 2023-07-04 15:38:23.308736
