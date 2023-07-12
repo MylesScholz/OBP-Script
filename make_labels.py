@@ -204,6 +204,7 @@ def add_data_matrix(figure, basis_x, basis_y, data):
 
 
 def write_pdf_page(pdf: PdfPages, data):
+    # Create a matplotlib Figure
     figure = plt.figure(
         figsize=(LETTER_WIDTH, LETTER_HEIGHT), dpi=600, layout="constrained"
     )
@@ -228,22 +229,61 @@ def write_pdf_page(pdf: PdfPages, data):
         # )
         # figure.add_artist(rectangle)
 
+        # Text Box 1 (Location)
+        # Different formats for the US and Canada
+        if entry["Country"] == "USA":
+            text_1 = "USA:{}:{} {} {} {} {}m".format(
+                entry["State"],
+                entry["County"],
+                entry["Abbreviated Location"],
+                entry["Dec. Lat."],
+                entry["Dec. Long."],
+                entry["Elevation"],
+            )
+        elif entry["Country"] == "Canada":
+            text_1 = "CANADA:{} {} {} {} {}m".format(
+                entry["State"],
+                entry["Abbreviated Location"],
+                entry["Dec. Lat."],
+                entry["Dec. Long."],
+                entry["Elevation"],
+            )
+        text_1 = tw.fill(text_1, 22, max_lines=3)
+
         add_text_box(
             figure,
             basis_x,
             basis_y,
-            tw.fill(
-                "USA:OR:KlamathCo Keno 42.139 -122.018 1179m",
-                22,
-                max_lines=3,
-            ),
+            text_1,
             "location",
         )
-        add_text_box(figure, basis_x, basis_y, "3.VII2023-1.1", "date")
-        add_text_box(figure, basis_x, basis_y, "P.Coleman net", "name")
-        add_text_box(figure, basis_x, basis_y, "2300537", "number")
-        add_data_matrix(figure, basis_x, basis_y, "2300537")
 
+        # Text Box 2 (Date)
+        text_2 = "{}.{}{}-{}.{}".format(
+            entry["Collection Day 1"],
+            entry["Month 1"],
+            entry["Year 1"],
+            entry["Sample ID"],
+            entry["Specimen ID"],
+        )
+        add_text_box(figure, basis_x, basis_y, text_2, "date")
+
+        # Text Box 3 (Collector and Method)
+        text_3 = "{}{} {}".format(
+            entry["Collector - First Initial"],
+            entry["Collector - Last Name"],
+            entry["Collection method"],
+        )
+        add_text_box(figure, basis_x, basis_y, text_3, "name")
+
+        # Text Box 4 (Observation No.)
+        text_4 = entry["Observation No."]
+        add_text_box(figure, basis_x, basis_y, text_4, "number")
+
+        # Barcode (Data Matrix of Observation No.)
+        add_data_matrix(figure, basis_x, basis_y, text_4)
+
+    # Save the figure to a new page of the PDF
     pdf.savefig(figure)
 
 
