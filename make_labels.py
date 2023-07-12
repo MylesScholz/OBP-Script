@@ -103,6 +103,33 @@ DATA_MATRIX = {
 }
 
 
+# Column Name Constants
+
+# Location
+COUNTRY = "Country"
+STATE = "State"
+COUNTY = "County"
+CITY = "Abbreviated Location"
+LATITUDE = "Dec. Lat."
+LONGITUDE = "Dec. Long."
+ELEVATION = "Elevation"
+
+# Date and IDs
+DAY = "Collection Day 1"
+MONTH = "Month 1"
+YEAR = "Year 1"
+SAMPLE_ID = "Sample ID"
+SPECIMEN_ID = "Specimen ID"
+
+# Collector and Method
+FIRST_INITIAL = "Collector - First Initial"
+LAST_NAME = "Collector - Last Name"
+METHOD = "Collection method"
+
+# Observation Number
+OBSERVATION_NUMBER = "Observation No."
+
+
 def parse_command_line():
     """
     Parses command line arguments, checking for --input and --output values
@@ -261,22 +288,22 @@ def write_pdf_page(pdf: PdfPages, data):
 
         # Text Box 1 (Location)
         # Different formats for the US and Canada
-        if entry["Country"] == "USA":
+        if entry[COUNTRY] == "USA":
             text_1 = "USA:{}:{} {} {} {} {}m".format(
-                entry["State"],
-                entry["County"],
-                entry["Abbreviated Location"],
-                entry["Dec. Lat."],
-                entry["Dec. Long."],
-                entry["Elevation"],
+                entry[STATE],
+                entry[COUNTY],
+                entry[CITY],
+                entry[LATITUDE],
+                entry[LONGITUDE],
+                entry[ELEVATION],
             )
-        elif entry["Country"] == "Canada":
+        elif entry[COUNTRY] == "Canada":
             text_1 = "CANADA:{} {} {} {} {}m".format(
-                entry["State"],
-                entry["Abbreviated Location"],
-                entry["Dec. Lat."],
-                entry["Dec. Long."],
-                entry["Elevation"],
+                entry[STATE],
+                entry[CITY],
+                entry[LATITUDE],
+                entry[LONGITUDE],
+                entry[ELEVATION],
             )
         text_1 = tw.fill(text_1, 22, max_lines=3)
 
@@ -290,19 +317,19 @@ def write_pdf_page(pdf: PdfPages, data):
 
         # Text Box 2 (Date)
         text_2 = "{}.{}{}-{}.{}".format(
-            entry["Collection Day 1"],
-            entry["Month 1"],
-            entry["Year 1"],
-            entry["Sample ID"],
-            entry["Specimen ID"],
+            entry[DAY],
+            entry[MONTH],
+            entry[YEAR],
+            entry[SAMPLE_ID],
+            entry[SPECIMEN_ID],
         )
         add_text_box(figure, basis_x, basis_y, text_2, "date")
 
         # Text Box 3 (Collector and Method)
         text_3 = "{}{} {}".format(
-            entry["Collector - First Initial"],
-            entry["Collector - Last Name"],
-            entry["Collection method"],
+            entry[FIRST_INITIAL],
+            entry[LAST_NAME],
+            entry[METHOD],
         )
         add_text_box(figure, basis_x, basis_y, text_3, "name")
 
