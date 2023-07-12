@@ -28,6 +28,7 @@ N_COLUMNS = 10
 LABEL_WIDTH = 0.666
 LABEL_HEIGHT = 0.311
 
+# Calculate equal spacing between labels
 HORIZONTAL_SPACING = (
     LETTER_WIDTH - (2 * HORIZONTAL_MARGIN) - (N_COLUMNS * LABEL_WIDTH)
 ) / (N_COLUMNS - 1)
@@ -37,8 +38,10 @@ VERTICAL_SPACING = (LETTER_HEIGHT - (2 * VERTICAL_MARGIN) - (N_ROWS * LABEL_HEIG
 
 # Label Layout Constants
 
+# Theshold that text should not cross to avoid overlapping with data matrix
 TEXT_CUTOFF = 0.466
 
+# Object containing text box formatting and layout presets
 TEXT_BOXES = {
     "location": {  # Collection Location
         "x_position": 0.005,
@@ -92,6 +95,7 @@ TEXT_BOXES = {
     },
 }
 
+# Data matrix layout values
 DATA_MATRIX = {
     "x_position": LABEL_WIDTH - 0.185,
     "y_position": 0.005,
@@ -150,8 +154,13 @@ def parse_command_line():
 
 
 def add_text_box(figure, basis_x, basis_y, text, box_type):
+    """
+    Adds a text box directly to the given figure (no plots used)
+    """
+    # Fetch the specified text box layout and formatting preset
     box_obj = TEXT_BOXES[box_type]
 
+    # Add the text box
     text = figure.text(
         basis_x + box_obj["x_position"],
         basis_y + box_obj["y_position"],
@@ -167,49 +176,70 @@ def add_text_box(figure, basis_x, basis_y, text, box_type):
         wrap=True,
     )
 
-    # Resize text to cutoff
+    # Resize text to fit left of the cutoff
     r = figure.canvas.get_renderer()
     text_bbox = text.get_window_extent(renderer=r)
+    # Decrement font size until the cutoff no longer overlaps with the text box
     while text_bbox.fully_containsx((TEXT_CUTOFF + basis_x) * figure.dpi):
         text.set_fontsize(text.get_fontsize() - 0.1)
         text_bbox = text.get_window_extent(renderer=r)
 
 
 def add_data_matrix(figure, basis_x, basis_y, data):
+    """
+    Generates and adds a rectangular (8 x 18) data matrix to the given figure
+    """
+
+    # Generate the data matrix using the Treepoem library (Python wrapper for BWIPP)
     image = tp.generate_barcode(
         barcode_type="datamatrixrectangular",
         data=data,
         options={"version": "8x18"},
     )
+    # Convert the PIL Image object returned above into a Numpy array
     data_matrix = np.asarray(image)
+    # Rotate the matrix 90 degrees anticlockwise
     data_matrix = np.rot90(image)
 
+    # Calculate position of the bottom left corner of the data matrix relative
+    # to the whole figure
     abs_x = basis_x + DATA_MATRIX["x_position"]
     abs_y = basis_y + DATA_MATRIX["y_position"]
+    # Set the width to the specified value
     width = DATA_MATRIX["width"]
+    # Calculate the height with the given width, maintaing the aspect ratio
+    # The aspect ratio is inverted because "image" was not rotated
     height = (image.width / image.height) * width
 
+    # Create a matplotlib bounding box and transform it from inches to pixels
     data_matrix_bbox = Bbox.from_bounds(abs_x, abs_y, width, height)
     data_matrix_bbox = TransformedBbox(data_matrix_bbox, figure.dpi_scale_trans)
 
+    # Add the data matrix directly to the figuer as an image with a given bounding box
     figure.add_artist(
         BboxImage(
             data_matrix_bbox,
-            cmap="binary_r",
-            interpolation="none",
+            cmap="binary_r",  # Greyscale colorscheme with high values being lighter
+            interpolation="none",  # Avoid artifacts from resizing the image
             data=data_matrix,
-            zorder=1000,
+            zorder=1000,  # Bring image to the front
         )
     )
 
 
 def write_pdf_page(pdf: PdfPages, data):
+    """
+    Creates a PDF page of labels from a given list of data entries
+    """
+
     # Create a matplotlib Figure
     figure = plt.figure(
         figsize=(LETTER_WIDTH, LETTER_HEIGHT), dpi=600, layout="constrained"
     )
 
+    # Loop through the data entries
     for i, entry in enumerate(data):
+        # Calculate the row and column of the current label
         row = N_ROWS - (i // N_COLUMNS) - 1
         column = i % N_COLUMNS
 
@@ -288,22 +318,29 @@ def write_pdf_page(pdf: PdfPages, data):
 
 
 def main():
+    # Read and validate the input and output file paths
     input_file_path, output_file_path = parse_command_line()
 
+    # Read in the data
     with open(input_file_path, newline="") as input_file:
         input_data = list(csv.DictReader(input_file))
 
+    # Open a PDF file
     with PdfPages(output_file_path) as pdf:
+        # Calculate partition values
         part_size = N_ROWS * N_COLUMNS
         part_start = 0
         part_end = part_size
 
+        # Check that the partition end doesn't exceed the total length of the data
         if part_end > len(input_data):
             part_end = len(input_data)
 
+        # Loop through the data, writing one page per partition
         while part_start < len(input_data):
             write_pdf_page(pdf, input_data[part_start:part_end])
 
+            # Increment the partition values
             part_start = part_end
             part_end += part_size
             if part_end > len(input_data):
