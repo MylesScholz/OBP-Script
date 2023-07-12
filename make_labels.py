@@ -3,11 +3,14 @@
 # Description: Takes formatted bee observation data and creates sheets of specimen labels
 
 import sys
+import os
+import csv
 import textwrap as tw
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.image import BboxImage
 from matplotlib.transforms import Bbox, TransformedBbox
+from matplotlib.backends.backend_pdf import PdfPages
 import treepoem as tp
 import numpy as np
 
@@ -97,7 +100,53 @@ DATA_MATRIX = {
 
 
 def parse_command_line():
-    pass
+    """
+    Parses command line arguments, checking for --input and --output values
+    """
+
+    input_file_path = ""
+    output_file_path = ""
+
+    # Check for --input argument (required)
+    if "--input" not in sys.argv:
+        print("ERROR: --input argument not set")
+        exit(1)
+
+    # Parse command line arguments
+    for i, arg in enumerate(sys.argv):
+        if arg == "--input":
+            if i + 1 > len(sys.argv):
+                print("ERROR: --input argument not set")
+                exit(1)
+            input_file_path = sys.argv[i + 1]
+        elif arg == "--output":
+            if i + 1 > len(sys.argv):
+                print("ERROR: --output argument not set")
+                exit(1)
+            output_file_path = sys.argv[i + 1]
+
+    # If the output file path is unset, name it after the input file
+    if output_file_path == "":
+        input_file_directory, input_file = os.path.split(input_file_path)
+        input_file_name, input_file_extension = os.path.splitext(input_file)
+        output_file_path = input_file_name + ".pdf"
+
+    # Check that input file path is a CSV file
+    if not input_file_path.lower().endswith(".csv"):
+        print("ERROR: input file must be in .csv format")
+        exit(1)
+
+    # Check that output file path is a PDF file
+    if not output_file_path.lower().endswith(".pdf"):
+        print("ERROR: output file must be in .pdf format")
+        exit(1)
+
+    # Check that input file exists
+    if not os.path.isfile(input_file_path):
+        print("ERROR: input file must exist")
+        exit(1)
+
+    return input_file_path, output_file_path
 
 
 def add_text_box(figure, basis_x, basis_y, text, box_type):
@@ -154,45 +203,71 @@ def add_data_matrix(figure, basis_x, basis_y, data):
     )
 
 
-def main():
-    # TODO: Read and partition data
-
+def write_pdf_page(pdf: PdfPages, data):
     figure = plt.figure(
         figsize=(LETTER_WIDTH, LETTER_HEIGHT), dpi=600, layout="constrained"
     )
 
-    for i in range(N_ROWS):
-        for j in range(N_COLUMNS):
-            # Calculate basis coordinates for the current label
-            # Label text will be positioned relative to these coordinates
-            basis_x = HORIZONTAL_MARGIN + (j * (LABEL_WIDTH + HORIZONTAL_SPACING))
-            basis_y = VERTICAL_MARGIN + (i * (LABEL_HEIGHT + VERTICAL_SPACING))
+    for i, entry in enumerate(data):
+        row = N_ROWS - (i // N_COLUMNS) - 1
+        column = i % N_COLUMNS
 
-            # Bounding rectangle to aid layout editing
-            # rectangle = plt.Rectangle(
-            #     (basis_x, basis_y),
-            #     LABEL_WIDTH,
-            #     LABEL_HEIGHT,
-            #     fill=False,
-            #     linewidth=0.5,
-            #     transform=figure.dpi_scale_trans,
-            # )
-            # figure.add_artist(rectangle)
+        # Calculate basis coordinates for the current label
+        # Label text will be positioned relative to these coordinates
+        basis_x = HORIZONTAL_MARGIN + (column * (LABEL_WIDTH + HORIZONTAL_SPACING))
+        basis_y = VERTICAL_MARGIN + (row * (LABEL_HEIGHT + VERTICAL_SPACING))
 
-            add_text_box(
-                figure,
-                basis_x,
-                basis_y,
-                tw.fill("USA:OR:KlamathCo Keno 42.139 -122.018 1179m", 22, max_lines=3),
-                "location",
-            )
-            add_text_box(figure, basis_x, basis_y, "3.VII2023-1.1", "date")
-            add_text_box(figure, basis_x, basis_y, "P.Coleman net", "name")
-            add_text_box(figure, basis_x, basis_y, "2300537", "number")
-            add_data_matrix(figure, basis_x, basis_y, "2300537")
+        # Bounding rectangle to aid layout editing
+        # rectangle = plt.Rectangle(
+        #     (basis_x, basis_y),
+        #     LABEL_WIDTH,
+        #     LABEL_HEIGHT,
+        #     fill=False,
+        #     linewidth=0.5,
+        #     transform=figure.dpi_scale_trans,
+        # )
+        # figure.add_artist(rectangle)
 
-    plt.savefig("test.pdf")
-    # plt.show()
+        add_text_box(
+            figure,
+            basis_x,
+            basis_y,
+            tw.fill(
+                "USA:OR:KlamathCo Keno 42.139 -122.018 1179m",
+                22,
+                max_lines=3,
+            ),
+            "location",
+        )
+        add_text_box(figure, basis_x, basis_y, "3.VII2023-1.1", "date")
+        add_text_box(figure, basis_x, basis_y, "P.Coleman net", "name")
+        add_text_box(figure, basis_x, basis_y, "2300537", "number")
+        add_data_matrix(figure, basis_x, basis_y, "2300537")
+
+    pdf.savefig(figure)
+
+
+def main():
+    input_file_path, output_file_path = parse_command_line()
+
+    with open(input_file_path, newline="") as input_file:
+        input_data = list(csv.DictReader(input_file))
+
+    with PdfPages(output_file_path) as pdf:
+        part_size = N_ROWS * N_COLUMNS
+        part_start = 0
+        part_end = part_size
+
+        if part_end > len(input_data):
+            part_end = len(input_data)
+
+        while part_start < len(input_data):
+            write_pdf_page(pdf, input_data[part_start:part_end])
+
+            part_start = part_end
+            part_end += part_size
+            if part_end > len(input_data):
+                part_end = len(input_data)
 
 
 if __name__ == "__main__":

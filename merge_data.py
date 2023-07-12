@@ -47,15 +47,15 @@ def parse_command_line():
             output_file_path = sys.argv[i + 1]
 
     # Check that provided file paths are CSV files
-    if not base_file_path.endswith(".csv"):
+    if not base_file_path.lower().endswith(".csv"):
         print("ERROR: base file must be in .csv format")
         exit(1)
 
-    if not append_file_path.endswith(".csv"):
+    if not append_file_path.lower().endswith(".csv"):
         print("ERROR: file to append must be in .csv format")
         exit(1)
 
-    if not output_file_path.endswith(".csv"):
+    if not output_file_path.lower().endswith(".csv"):
         print("ERROR: output file must be in .csv format")
         exit(1)
 

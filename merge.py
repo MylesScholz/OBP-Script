@@ -21,7 +21,7 @@ def main():
             exit(0)
         elif not os.path.isfile(base_file_input):
             print("ERROR: file does not exist")
-        elif not base_file_input.endswith(".csv"):
+        elif not base_file_input.lower().endswith(".csv"):
             print("ERROR: file is not a CSV file")
         else:
             base_file_path = os.path.relpath(base_file_input)
@@ -37,7 +37,7 @@ def main():
             exit(0)
         elif not os.path.isfile(append_file_input):
             print("ERROR: file does not exist")
-        elif not append_file_input.endswith(".csv"):
+        elif not append_file_input.lower().endswith(".csv"):
             print("ERROR: file is not a CSV file")
         else:
             append_file_path = os.path.relpath(append_file_input)
@@ -51,7 +51,7 @@ def main():
         output_file_input = output_file_input.strip('"')
         if output_file_input.lower() == "q":
             exit(0)
-        elif output_file_input != "" and output_file_input.endswith(".csv"):
+        elif output_file_input != "" and output_file_input.lower().endswith(".csv"):
             output_file_path = output_file_input
         else:
             print("ERROR: invalid file path")
