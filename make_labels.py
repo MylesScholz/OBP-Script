@@ -3,9 +3,14 @@
 # Description: Takes formatted bee observation data and creates sheets of specimen labels
 
 import sys
+import textwrap as tw
 import matplotlib as mpl
 import matplotlib.pyplot as plt
-import textwrap
+from matplotlib.image import BboxImage
+from matplotlib.transforms import Bbox, TransformedBbox
+import treepoem as tp
+import numpy as np
+
 
 # PDF Layout Constants
 LETTER_WIDTH = 8.5
@@ -20,8 +25,12 @@ N_COLUMNS = 10
 LABEL_WIDTH = 0.666
 LABEL_HEIGHT = 0.311
 
-HORIZONTAL_SPACING = 0.1488888889
-VERTICAL_SPACING = 0.0927083333
+HORIZONTAL_SPACING = (
+    LETTER_WIDTH - (2 * HORIZONTAL_MARGIN) - (N_COLUMNS * LABEL_WIDTH)
+) / (N_COLUMNS - 1)
+VERTICAL_SPACING = (LETTER_HEIGHT - (2 * VERTICAL_MARGIN) - (N_ROWS * LABEL_HEIGHT)) / (
+    N_ROWS - 1
+)
 
 # Label Layout Constants
 
@@ -80,7 +89,11 @@ TEXT_BOXES = {
     },
 }
 
-# TODO: Barcode
+DATA_MATRIX = {
+    "x_position": LABEL_WIDTH - 0.185,
+    "y_position": 0.005,
+    "width": 0.10,
+}
 
 
 def parse_command_line():
@@ -113,10 +126,40 @@ def add_text_box(figure, basis_x, basis_y, text, box_type):
         text_bbox = text.get_window_extent(renderer=r)
 
 
+def add_data_matrix(figure, basis_x, basis_y, data):
+    image = tp.generate_barcode(
+        barcode_type="datamatrixrectangular",
+        data=data,
+        options={"version": "8x18"},
+    )
+    data_matrix = np.asarray(image)
+    data_matrix = np.rot90(image)
+
+    abs_x = basis_x + DATA_MATRIX["x_position"]
+    abs_y = basis_y + DATA_MATRIX["y_position"]
+    width = DATA_MATRIX["width"]
+    height = (image.width / image.height) * width
+
+    data_matrix_bbox = Bbox.from_bounds(abs_x, abs_y, width, height)
+    data_matrix_bbox = TransformedBbox(data_matrix_bbox, figure.dpi_scale_trans)
+
+    figure.add_artist(
+        BboxImage(
+            data_matrix_bbox,
+            cmap="binary_r",
+            interpolation="none",
+            data=data_matrix,
+            zorder=1000,
+        )
+    )
+
+
 def main():
     # TODO: Read and partition data
 
-    figure = plt.figure(figsize=(LETTER_WIDTH, LETTER_HEIGHT), layout="constrained")
+    figure = plt.figure(
+        figsize=(LETTER_WIDTH, LETTER_HEIGHT), dpi=600, layout="constrained"
+    )
 
     for i in range(N_ROWS):
         for j in range(N_COLUMNS):
@@ -125,30 +168,28 @@ def main():
             basis_x = HORIZONTAL_MARGIN + (j * (LABEL_WIDTH + HORIZONTAL_SPACING))
             basis_y = VERTICAL_MARGIN + (i * (LABEL_HEIGHT + VERTICAL_SPACING))
 
-            # TODO: Remove rectangle when done with layout
-            rectangle = plt.Rectangle(
-                (basis_x, basis_y),
-                LABEL_WIDTH,
-                LABEL_HEIGHT,
-                transform=figure.dpi_scale_trans,
-            )
-            figure.add_artist(rectangle)
+            # Bounding rectangle to aid layout editing
+            # rectangle = plt.Rectangle(
+            #     (basis_x, basis_y),
+            #     LABEL_WIDTH,
+            #     LABEL_HEIGHT,
+            #     fill=False,
+            #     linewidth=0.5,
+            #     transform=figure.dpi_scale_trans,
+            # )
+            # figure.add_artist(rectangle)
 
             add_text_box(
                 figure,
                 basis_x,
                 basis_y,
-                textwrap.fill(
-                    "USA:OR:KlamathCo Keno 42.139 -122.018 1179m", 22, max_lines=3
-                ),
+                tw.fill("USA:OR:KlamathCo Keno 42.139 -122.018 1179m", 22, max_lines=3),
                 "location",
             )
             add_text_box(figure, basis_x, basis_y, "3.VII2023-1.1", "date")
-            add_text_box(
-                figure, basis_x, basis_y, "M. and D.O'Loughlin vane trap", "name"
-            )
-            # add_text_box(figure, basis_x, basis_y, "vane trap", "method")
+            add_text_box(figure, basis_x, basis_y, "P.Coleman net", "name")
             add_text_box(figure, basis_x, basis_y, "2300537", "number")
+            add_data_matrix(figure, basis_x, basis_y, "2300537")
 
     plt.savefig("test.pdf")
     # plt.show()
