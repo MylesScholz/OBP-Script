@@ -13,46 +13,49 @@ def main():
     # Get base file path from user
     while base_file_path == "":
         print("\nBase File: the file that will be treated as a pre-existing dataset")
-        base_file_input = input(
+        base_file_response = input(
             "Enter a relative or absolute file path, including the file extension, or 'q' to quit: "
         )
-        base_file_input = base_file_input.strip('"')
-        if base_file_input.lower() == "q":
+        base_file_response = base_file_response.strip('"')
+        if base_file_response.lower() == "q":
             exit(0)
-        elif not os.path.isfile(base_file_input):
+        elif not os.path.isfile(base_file_response):
             print("ERROR: file does not exist")
-        elif not base_file_input.lower().endswith(".csv"):
+        elif not base_file_response.lower().endswith(".csv"):
             print("ERROR: file is not a CSV file")
         else:
-            base_file_path = os.path.relpath(base_file_input)
+            base_file_path = '"{}"'.format(os.path.relpath(base_file_response))
 
     # Get append file from user
     while append_file_path == "":
         print("\nFile to Append: the file that will be treated as new data")
-        append_file_input = input(
+        append_file_response = input(
             "Enter a relative or absolute file path, including the file extension, or 'q' to quit: "
         )
-        append_file_input = append_file_input.strip('"')
-        if append_file_input.lower() == "q":
+        append_file_response = append_file_response.strip('"')
+        if append_file_response.lower() == "q":
             exit(0)
-        elif not os.path.isfile(append_file_input):
+        elif not os.path.isfile(append_file_response):
             print("ERROR: file does not exist")
-        elif not append_file_input.lower().endswith(".csv"):
+        elif not append_file_response.lower().endswith(".csv"):
             print("ERROR: file is not a CSV file")
         else:
-            append_file_path = os.path.relpath(append_file_input)
+            append_file_path = '"{}"'.format(os.path.relpath(append_file_response))
 
     # Get output file from user
     while output_file_path == "":
         print("\nOutput File: the file to write merged data to")
-        output_file_input = input(
+        output_file_response = input(
             "Enter a relative or absolute file path, including the file extension, or 'q' to quit: "
         )
-        output_file_input = output_file_input.strip('"')
-        if output_file_input.lower() == "q":
+        output_file_response = output_file_response.strip('"')
+        if output_file_response.lower() == "q":
             exit(0)
-        elif output_file_input != "" and output_file_input.lower().endswith(".csv"):
-            output_file_path = output_file_input
+        elif (
+            output_file_response.lower() != ".csv"
+            and output_file_response.lower().endswith(".csv")
+        ):
+            output_file_path = '"{}"'.format(os.path.relpath(output_file_response))
         else:
             print("ERROR: invalid file path")
 
@@ -69,7 +72,7 @@ def main():
     ]
 
     print(
-        "Merging '{}' and '{}' into '{}'...".format(
+        "Merging {} and {} into {}...".format(
             base_file_path, append_file_path, output_file_path
         )
     )
@@ -93,7 +96,7 @@ def main():
 
         with open("logFile.txt", "a") as log_file:
             log_file.write(
-                "ERROR - on {} when merging '{}' and '{}' into '{}'\n".format(
+                "ERROR - on {} when merging {} and {} into {}\n".format(
                     current_date, base_file_path, append_file_path, output_file_path
                 )
             )
@@ -101,7 +104,7 @@ def main():
         exit(completed_process.returncode)
 
     print(
-        "Merging '{}' and '{}' into '{}' => Done! \n\n".format(
+        "Merging {} and {} into {} => Done! \n\n".format(
             base_file_path, append_file_path, output_file_path
         )
     )

@@ -34,17 +34,17 @@ def parse_command_line():
             if i + 1 > len(sys.argv):
                 print("ERROR: --base argument not set")
                 exit(1)
-            base_file_path = sys.argv[i + 1]
+            base_file_path = sys.argv[i + 1].strip('"')
         elif arg == "--append":
             if i + 1 > len(sys.argv):
                 print("ERROR: --append argument not set")
                 exit(1)
-            append_file_path = sys.argv[i + 1]
+            append_file_path = sys.argv[i + 1].strip('"')
         elif arg == "--output":
             if i + 1 > len(sys.argv):
                 print("ERROR: --output argument not set")
                 exit(1)
-            output_file_path = sys.argv[i + 1]
+            output_file_path = sys.argv[i + 1].strip('"')
 
     # Check that provided file paths are CSV files
     if not base_file_path.lower().endswith(".csv"):

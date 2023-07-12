@@ -149,12 +149,12 @@ def parse_command_line():
             if i + 1 > len(sys.argv):
                 print("ERROR: --input argument not set")
                 exit(1)
-            input_file_path = sys.argv[i + 1]
+            input_file_path = sys.argv[i + 1].strip('"')
         elif arg == "--output":
             if i + 1 > len(sys.argv):
                 print("ERROR: --output argument not set")
                 exit(1)
-            output_file_path = sys.argv[i + 1]
+            output_file_path = sys.argv[i + 1].strip('"')
 
     # If the output file path is unset, name it after the input file
     if output_file_path == "":

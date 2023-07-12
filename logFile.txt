@@ -102,3 +102,5 @@ SUCCESS - Merged data on 2023-06-30 14:41:27.044736
 SUCCESS - Pulled and formatted data on 2023-07-04 15:04:11.985244
 SUCCESS - Pulled and formatted data on 2023-07-04 15:08:38.353930
 SUCCESS - Merged data on 2023-07-04 15:38:23.308736
+ERROR - on 2023-07-12 16:32:12.562666 when making labels from "test_csv.csv" into "test.pdf"
+SUCCESS - Made labels on 2023-07-12 16:39:02.995011
