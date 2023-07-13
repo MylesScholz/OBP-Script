@@ -72,19 +72,24 @@ def parse_command_line():
 
 
 def equal_identifiers(row1: dict, row2: dict):
-    if (
+    if row1["Observation No."] == row2["Observation No."]:
+        return True
+    elif (
+        row1["Associated plant - Inaturalist URL"]
+        == row2["Associated plant - Inaturalist URL"]
+        and row1["Associated plant - Inaturalist URL"] != ""
+        and row2["Associated plant - Inaturalist URL"] != ""
+        and row1["Sample ID"] == row2["Sample ID"]
+        and row1["Specimen ID"] == row2["Specimen ID"]
+    ):
+        return True
+    elif (
         row1["iNaturalist Alias"] == row2["iNaturalist Alias"]
         and row1["Sample ID"] == row2["Sample ID"]
         and row1["Specimen ID"] == row2["Specimen ID"]
         and row1["Collection Day 1"] == row2["Collection Day 1"]
         and row1["Month 1"] == row2["Month 1"]
         and row1["Year 1"] == row2["Year 1"]
-        and (
-            row1["Associated plant - Inaturalist URL"]
-            == row2["Associated plant - Inaturalist URL"]
-            or row1["Associated plant - Inaturalist URL"] == ""
-            or row2["Associated plant - Inaturalist URL"] == ""
-        )
     ):
         return True
 
@@ -268,8 +273,9 @@ def merge_files(base_file_path: str, append_file_path: str, output_file_path="")
             # Search for current row in base data (using keys)
             index = search_data_for_row(base_data, row)
 
-            if index == -1:
+            if index == -1 and row["Dec. Lat."] != "" and row["Dec. Long."] != "":
                 # The current row is new; append it to the base data
+                # (Exclude rows that don't have coordinates)
                 base_data.append(row)
             else:
                 # Fill in empty columns in the base data with values from the current row
