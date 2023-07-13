@@ -3,11 +3,12 @@
 ## **Summary**
 These scripts retrieve observation data from iNaturalist.org and reformat it for printing bee specimen labels.
 
-There are two main processes:
+There are three main processes:
 1. Pulling and formatting data from iNaturalist.org
 2. Merging and indexing formatted data
+3. Making sheets of labels from formatted data
 
-These processes can be run by executing (double-clicking) iNaturalist_Process.bat or Merge_Process.bat, respectively.
+These processes can be run by executing (double-clicking) iNaturalist_Process.bat, Merge_Process.bat, or Labels_Process.bat, respectively.
 
 ## **Pulling and Formatting Data from iNaturalist.org**
 This script (iNaturalist_Process.bat) will query iNaturalist.org for observation data from a given year and from a given list of iNaturalist projects. When a user runs the script, they will be prompted to type a year to query. The list of iNaturalist projects to query is stored in OBP-Script/config/sources.txt (see "Changing Sources" below).
@@ -127,3 +128,51 @@ This script (Merge_Process.bat) will combine, sort, and index two formatted data
       * Manually modify the columns of either input file to match exactly. If reordering or renaming the columns, make sure that the data is reordered or rewritten in the same way.
       * Modify the code (format_data.py) to change how data is formatted. Run the data pulling and formatting process again.
       * After either, run the merging process again with the reformatted data.
+
+## **Making Sheets of Labels from Formatted Data**
+This script (Labels_Process.bat) will create a PDF of labels with data from a formatted CSV file. When the user runs the script, they will be prompted for an input file path and an output file path. The input file path is required and must be a CSV file with a specific header (see "Input File Specifications" below). The output file is also required and must be a PDF file.
+
+### **Running the Process**
+1. Execute (double-click) Labels_Process.bat.
+2. When prompted, type or paste the file path of the input CSV file.
+   * The program automatically trims quotation marks from the ends of the file path, so users may paste file paths copied directly from the File Explorer on Windows (see "Help and Tips" above).
+3. When prompted, type or paste the file path of the output PDF file.
+   * The program automatically trims quotation marks from the ends of the file path, so users may paste file paths copied directly from the File Explorer on Windows (see "Help and Tips" above).
+4. Wait while the program creates the labels sheets. This may take several minutes, depending on the amount of input data.
+5. The resulting PDF will appear at the specified output file path.
+
+### **Input File Specifications**
+This script expects that the input CSV file has certain column names, which must match the following list *exactly*, excluding the quotation marks. The column names are defined by constants in the first lines of make_labels.py.
+
+* "Country"
+* "State"
+* "County"
+* "Abbreviated Location"
+* "Dec. Lat."
+* "Dec. Long."
+* "Elevation"
+* "Collection Day 1"
+* "Month 1"
+* "Year 1"
+* "Sample ID"
+* "Specimen ID"
+* "Collector - First Initial"
+* "Collector - Last Name"
+* "Collection method"
+* "Observation No."
+
+### **Output File Specifications**
+The resulting PDF will include one label for each entry of the input data. The pages have the following layout:
+
+US Letter size paper (8.5" x 11")  
+Portrait orientation  
+0.25" horizontal margins  
+0.5" vertical margins  
+
+25 rows of labels  
+10 columns of labels  
+Equal horizontal and vertical spacing  
+0.666" label width  
+0.311" label height  
+
+All layout values are defined as constants in the first lines of make_labels.py.
