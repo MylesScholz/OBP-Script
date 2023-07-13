@@ -21,10 +21,8 @@ def parse_command_line():
     Parses the command line arguments, checking for --input and --output arguments
     """
 
-    # Init vars
-    i = 0
-    input_path = ""
-    output_path = ""
+    input_file_path = ""
+    output_file_path = ""
     input_file_type = ""
 
     # Input file is required
@@ -33,27 +31,23 @@ def parse_command_line():
         exit(1)
 
     # Iterate through command line and assign strings to input and output paths
-    for arg in sys.argv:
+    for i, arg in enumerate(sys.argv):
         if arg == "--input":
             if i + 1 >= len(sys.argv):
                 print("ERROR: --input argument not set")
                 exit(1)
-
-            input_path = sys.argv[i + 1]
+            input_file_path = sys.argv[i + 1].strip('"')
         elif arg == "--output":
             if i + 1 >= len(sys.argv):
                 print("ERROR: --output argument not set")
                 exit(1)
-
-            output_path = sys.argv[i + 1]
-
-        i += 1
+            output_file_path = sys.argv[i + 1].strip('"')
 
     # Input path:
     # data/folder_name/file_name
 
     # Parse input file and input file type
-    input_path_split = input_path.split("/")
+    input_path_split = input_file_path.split("/")
     input_file = input_path_split[-1]
 
     # The input file must be kept in data dir
@@ -75,12 +69,12 @@ def parse_command_line():
     # results/folder_name/file_name
 
     # If the output file does exist, it must be kept in the results dir
-    if output_path != "" and output_path.split("/")[0] != "results":
+    if output_file_path != "" and output_file_path.split("/")[0] != "results":
         print("ERROR: --output file must be saved inside the 'results' directory")
         exit(1)
 
     # If output was not specified, use the input folder name
-    if output_path == "":
+    if output_file_path == "":
         # Get the input folder name
         input_folder = input_path_split[-2]
 
@@ -90,7 +84,7 @@ def parse_command_line():
         if input_folder_split[0].isalpha():
             source_abbreviation = input_folder_split[0] + "_"
 
-        output_path = (
+        output_file_path = (
             "results/"
             + input_folder
             + "/"
@@ -102,25 +96,25 @@ def parse_command_line():
 
     # Remove file from output path to get the output directory
     # Append '/' so it is treated as a directory
-    output_folder = output_path[: output_path.rindex("/")] + "/"
+    output_folder = output_file_path[: output_file_path.rindex("/")] + "/"
 
     # Create output folder
     if not os.path.exists(os.path.dirname(output_folder)):
         try:
             os.makedirs(os.path.dirname(output_folder))
-        except OSError as exc:  # Guard against race condition
-            if exc.errno != errno.EEXIST:
+        except OSError as e:  # Guard against race condition
+            if e.errno != errno.EEXIST:
                 raise
 
     # Create output file
-    f = open(output_path, "w")
+    f = open(output_file_path, "w")
     f.close()
 
     return (
-        input_path,
+        input_file_path,
         input_file_name,
         input_file_type.lower(),
-        output_path,
+        output_file_path,
     )
 
 
