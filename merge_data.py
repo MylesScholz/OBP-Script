@@ -79,6 +79,12 @@ def equal_identifiers(row1: dict, row2: dict):
         and row1["Collection Day 1"] == row2["Collection Day 1"]
         and row1["Month 1"] == row2["Month 1"]
         and row1["Year 1"] == row2["Year 1"]
+        and (
+            row1["Associated plant - Inaturalist URL"]
+            == row2["Associated plant - Inaturalist URL"]
+            or row1["Associated plant - Inaturalist URL"] == ""
+            or row2["Associated plant - Inaturalist URL"] == ""
+        )
     ):
         return True
 
@@ -86,18 +92,15 @@ def equal_identifiers(row1: dict, row2: dict):
 
 
 def search_data_for_row(data: list, row: dict):
-    # Set default return value to -1 (row not found in data)
-    index = -1
-
     # Search the data linearly
     for i, entry in enumerate(data):
         # Check if all keys match
         if equal_identifiers(entry, row):
-            # Record the index and break the loop
-            index = i
-            break
+            # Return the index of the matching row
+            return i
 
-    return index
+    # Set default return value to -1 (row not found in data)
+    return -1
 
 
 def compare_numerical_string(string1: str, string2: str):
