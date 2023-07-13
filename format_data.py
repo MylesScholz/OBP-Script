@@ -9,85 +9,17 @@ Description: Parse pollinator data pulled from iNaturalist.org and generate a re
 # External imports
 import os
 import sys
-import string
 import errno
 import csv
-import io
-
-# import openpyxl
-# from openpyxl import load_workbook
-# from openpyxl import Workbook
 
 # Local imports
 import col_functions
 
 
-# Functions
-
-
-# def letter_to_index(letter):
-#     """Converts a column letter, e.g. "A", "B", "AA", "BC" etc. to a zero based
-#     column index.
-#     A becomes 0, B becomes 1, Z becomes 25, AA becomes 26 etc.
-
-#     Args:
-#         letter (str): The column index letter.
-
-#     Returns:
-#         The column index as an integer.
-#     """
-
-#     letter = letter.upper()
-
-#     result = 0
-
-#     for index, char in enumerate(reversed(letter)):
-#         # Get the ASCII number of the letter and subtract 64 so that A
-#         # corresponds to 1.
-
-#         num = ord(char) - 64
-
-#         # Multiply the number with 26 to the power of `index` to get the correct
-#         # value of the letter based on it's index in the string.
-
-#         final_num = (26**index) * num
-
-#         result += final_num
-
-#     # Subtract 1 from the result to make it zero-based before returning.
-
-#     return result - 1
-
-
-# def count_rows(workbook, worksheet):
-#     wb = load_workbook(str(workbook))
-
-#     ws = wb[str(worksheet)]
-
-#     row_count = str(ws.max_row)
-
-#     print("count rows:", row_count)
-
-#     return row_count
-
-
-# def count_cols(workbook, worksheet):
-#     wb = load_workbook(str(workbook))
-
-#     ws = wb[str(worksheet)]
-
-#     col_count = str(ws.max_column)
-
-#     print("count cols:", col_count)
-
-#     return col_count
-
-
 def parse_command_line():
-    # Parse the command line arguments:
-    # Determine an input path, output path, and input file type
-
-    # print("Parsing command line arguments...")
+    """
+    Parses the command line arguments, checking for --input and --output arguments
+    """
 
     # Init vars
     i = 0
@@ -192,28 +124,6 @@ def parse_command_line():
     )
 
 
-def read_csv_header(file_string):
-    file = open(file_string, "r")  # Open CSV file
-
-    return file.readline()
-
-
-# def read_xlsx_header(wb_name, ws_name):
-#     wb = load_workbook(wb_name)
-
-#     ws = wb[str(ws_name)]
-
-#     max_col = list(string.ascii_lowercase)[ws.max_column - 1].upper()
-
-#     print(max_col)
-
-#     print(ws.max_column)
-
-#     selection_str = "A1:" + max_col + "1"
-
-#     return ws[selection_str].ecnode("utf8")
-
-
 def read_csv(file_string):
     # print("\tReading from CSV...")
 
@@ -233,11 +143,6 @@ def read_csv(file_string):
     return header_row, file_rows
 
 
-# def read_xlsx(file_string):
-#     print("\tReading from Excel spreadsheet...")
-#     # TODO: Read xlsx header and content, save them to strings, and return them
-
-
 def read_data(file_string, file_type):
     # print("Reading data from input source...")
 
@@ -248,8 +153,6 @@ def read_data(file_string, file_type):
     # Check which file type to read from
     if file_type == "csv":
         header, file_rows = read_csv(file_string)
-    # elif file_type == "xlsx":
-    #     header, file_rows = read_xlsx(file_string)
     else:
         print("ERROR: Invalid input file type")
         exit(1)
@@ -295,7 +198,7 @@ def print_over_line(string: str):
     print("\033[K" + string + "\r", end="")
 
 
-def gen_output(
+def format_output(
     output_header: list, output_file_path: str, input_header: list, input_rows: list
 ):
     """
@@ -501,7 +404,6 @@ def gen_output(
 
 def main():
     # Intro
-    # print("iNaturalist Pipeline -----------------------")
 
     # I/O variables
     input_file_path = ""
@@ -516,70 +418,16 @@ def main():
         output_file_path,
     ) = parse_command_line()
 
-    # Pipeline Description
-    # print("\tInput path:\t", input_file)
-    # print("\tInput name:\t", input_file_name)
-    # print("\tInput type:\t", input_file_type)
-    # print("\tOutput path:\t", output_file)
-    # print()
-    # print()
-
     # Choose which file reading function to call
     input_header, input_rows = read_data(input_file_path, input_file_type)
 
-    # Reader header from config/format_header.csv
+    # Read header from config/format_header.csv
     with open("config/format_header.txt", newline="") as header_file:
         csv_reader = csv.reader(header_file, delimiter="\n")
         output_header = [line[0] for line in csv_reader]
-    # output_header = [
-    #     "Verified",
-    #     "Date Added",
-    #     "Date Label Print",
-    #     "Date Label Sent",
-    #     "Observation No.",
-    #     "Voucher No.",
-    #     "iNaturalist ID",
-    #     "iNaturalist Alias",
-    #     "Collector - First Name",
-    #     "Collector - First Initial",
-    #     "Collector - Last Name",
-    #     "Sample ID",
-    #     "Specimen ID",
-    #     "Collection Day 1",
-    #     "Month 1",
-    #     "Year 1",
-    #     "Time 1",
-    #     "Collection Day 2",
-    #     "Month 2",
-    #     "Year 2",
-    #     "Time 2",
-    #     "Collect Date 2 Merge",
-    #     "Country",
-    #     "State",
-    #     "County",
-    #     "Location",
-    #     "Collection Site Description",
-    #     "Abbreviated Location",
-    #     "Dec. Lat.",
-    #     "Dec. Long.",
-    #     "Lat/Long Accuracy",
-    #     "Elevation",
-    #     "Collection method",
-    #     "Associated plant - family",
-    #     "Associated plant - genus, species",
-    #     "Associated plant - Inaturalist URL",
-    #     "Det. Volunteer - Family",
-    #     "Det. Volunteer - Genus",
-    #     "Det. Volunteer - Species",
-    #     "Det. Volunteer - Sex/Caste",
-    #     "Det LR Best - Genus",
-    #     "Det. LR Best - Species",
-    #     "Det LR Best - Sex/Caste",
-    # ]
 
     # Create output data
-    gen_output(output_header, output_file_path, input_header, input_rows)
-    # print()
+    format_output(output_header, output_file_path, input_header, input_rows)
     sys.stdout.writelines(output_file_path)
 
 
