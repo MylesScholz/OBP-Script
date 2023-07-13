@@ -332,6 +332,8 @@ def format_country(country_name: str):
 
     if country_name == "United States":
         country_abbreviation = "USA"
+    elif country_name == "Canada":
+        country_abbreviation = "CAN"
 
     # Insert other known abbreviations here
 

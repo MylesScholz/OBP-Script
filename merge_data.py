@@ -72,7 +72,11 @@ def parse_command_line():
 
 
 def equal_identifiers(row1: dict, row2: dict):
-    if row1["Observation No."] == row2["Observation No."]:
+    if (
+        row1["Observation No."] == row2["Observation No."]
+        and row1["Observation No."] != ""
+        and row2["Observation No."] != ""
+    ):
         return True
     elif (
         row1["Associated plant - Inaturalist URL"]

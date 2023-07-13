@@ -297,7 +297,7 @@ def write_pdf_page(pdf: PdfPages, data):
                 entry[LONGITUDE],
                 entry[ELEVATION],
             )
-        elif entry[COUNTRY] == "Canada":
+        elif entry[COUNTRY] == "CAN":
             text_1 = "CANADA:{} {} {} {} {}m".format(
                 entry[STATE],
                 entry[CITY],
