@@ -91,9 +91,9 @@ def main():
     # Check if the last process (merge_data.py) exited with an error code
     if completed_process.returncode != 0:
         print(completed_process.stdout)
+        print(completed_process.stderr)
 
         # Log the error
-
         with open("logFile.txt", "a") as log_file:
             log_file.write(
                 "ERROR - on {} when merging {} and {} into {}\n".format(

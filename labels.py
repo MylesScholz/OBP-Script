@@ -67,6 +67,7 @@ def main():
     # Check if the last process (make_labels.py) exited with an error code
     if completed_process.returncode != 0:
         print(completed_process.stdout)
+        print(completed_process.stderr)
 
         # Log the error
         with open("logFile.txt", "a") as log_file:
