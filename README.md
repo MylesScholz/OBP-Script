@@ -10,6 +10,40 @@ There are three main processes:
 
 These processes can be run by executing (double-clicking) iNaturalist_Process.bat, Merge_Process.bat, or Labels_Process.bat, respectively.
 
+## **Installation**
+These scripts depend on a several pieces of third-party software to function. For developers' convenience, there is a list in OBP-Script/config/dependencies.txt. This section will provide instructions on how to install each in order on a Windows computer.
+
+### **Python**
+Firstly, the scripts require a version of Python 3 installed.
+1. Open a Command Prompt terminal.
+2. Type "python --version" and press enter.  
+   * If the command returns "Python 3.\*.\*", where * is any number, steps 3-5 are optional but recommended.
+   * If the command returns a "Python was not found" error or a version of Python less than 3, close the Command Prompt window and continue with steps 3-5.
+3. Go to https://www.python.org/downloads/ and click "Download Python 3.\*.\*".
+4. Go to the folder where the EXE file downloaded and execute (double-click) it.  
+   * Follow the installation instructions.
+   * Check the box marked "Add python.exe to PATH variable" when prompted.
+5. When the installation is complete, continue to the next section ("Python Libraries").
+
+### **Python Libraries**
+Next, the scripts need some external Python libraries installed.
+1. Open a Command Prompt terminal.
+2. Type "pip install pyinaturalist matplotlib treepoem ghostscript tqdm" and press Enter.
+3. When installation is complete (the cursor is flashing next to a line ending with ">"), continue to the next section ("Ghostscript").
+
+### **Ghostscript**
+Finally, some of the Python libraries (treepoem and ghostscript) require a version of the software Ghostscript installed.
+1. Go to https://www.ghostscript.com/releases/gsdnld.html.
+2. Click the link "Ghostscript AGPL release" next to either "Ghostscript 10.01.2 for Windows (64 bit)" or "Ghostscript 10.01.2 for Windows (32 bit)", depending on whether the computer is a 64-bit or 32-bit architecture.  
+   * To check the computer's architecture, open the System Information application. The "System Type" field will contain either x64 or x32, corresponding to 64-bit and 32-bit architectures, respectively.
+3. Go to the folder where the EXE file downloaded and execute (double-click) it.  
+   * This will require administrator privileges on the computer.
+   * Follow the installation instructions without changing any of the options.
+4. Wait until installation finishes.
+
+After completing the above steps, the scripts should be able to run on the computer.
+
+
 ## **Pulling and Formatting Data from iNaturalist.org**
 This script (iNaturalist_Process.bat) will query iNaturalist.org for observation data from a given year and from a given list of iNaturalist projects. When a user runs the script, they will be prompted to type a year to query. The list of iNaturalist projects to query is stored in OBP-Script/config/sources.txt (see "Changing Sources" below).
 
