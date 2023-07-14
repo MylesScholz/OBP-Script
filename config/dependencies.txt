@@ -1,7 +1,6 @@
 Python 3.*
 pyinaturalist
 matplotlib
-numpy
-PIL
 treepoem
-ghostscript
+ghostscript (Python library and software)
+tqdm

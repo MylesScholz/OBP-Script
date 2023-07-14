@@ -58,12 +58,8 @@ def main():
     )
 
     # Run make_labels.py with the user-provided arguments
-    completed_process = subprocess.run(
-        command_args,
-        shell=True,
-        capture_output=True,
-        encoding=locale.getpreferredencoding(),
-    )
+    completed_process = subprocess.Popen(command_args)
+    completed_process.wait()
 
     # Get the current date for logging
     current_date = str(datetime.datetime.now())

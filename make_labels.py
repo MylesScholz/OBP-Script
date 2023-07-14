@@ -13,6 +13,7 @@ from matplotlib.transforms import Bbox, TransformedBbox
 from matplotlib.backends.backend_pdf import PdfPages
 import treepoem as tp
 import numpy as np
+from tqdm import tqdm
 
 
 # PDF Layout Constants
@@ -109,7 +110,7 @@ DATA_MATRIX = {
 COUNTRY = "Country"
 STATE = "State"
 COUNTY = "County"
-CITY = "Abbreviated Location"
+PLACE = "Abbreviated Location"
 LATITUDE = "Dec. Lat."
 LONGITUDE = "Dec. Long."
 ELEVATION = "Elevation"
@@ -128,6 +129,35 @@ METHOD = "Collection method"
 
 # Observation Number
 OBSERVATION_NUMBER = "Observation No."
+
+
+def validate_file_paths(input_file_path: str, output_file_path: str):
+    """
+    Ensures provided input and output file paths are valid
+    """
+
+    # If the output file path is unset, name it after the input file
+    if output_file_path == "":
+        input_file_directory, input_file = os.path.split(input_file_path)
+        input_file_name, input_file_extension = os.path.splitext(input_file)
+        output_file_path = input_file_name + ".pdf"
+
+    # Check that input file path is a CSV file
+    if not input_file_path.lower().endswith(".csv"):
+        print("ERROR: input file must be in .csv format")
+        exit(1)
+
+    # Check that output file path is a PDF file
+    if not output_file_path.lower().endswith(".pdf"):
+        print("ERROR: output file must be in .pdf format")
+        exit(1)
+
+    # Check that input file exists
+    if not os.path.isfile(input_file_path):
+        print("ERROR: input file must exist")
+        exit(1)
+
+    return input_file_path, output_file_path
 
 
 def parse_command_line():
@@ -156,28 +186,7 @@ def parse_command_line():
                 exit(1)
             output_file_path = sys.argv[i + 1].strip('"')
 
-    # If the output file path is unset, name it after the input file
-    if output_file_path == "":
-        input_file_directory, input_file = os.path.split(input_file_path)
-        input_file_name, input_file_extension = os.path.splitext(input_file)
-        output_file_path = input_file_name + ".pdf"
-
-    # Check that input file path is a CSV file
-    if not input_file_path.lower().endswith(".csv"):
-        print("ERROR: input file must be in .csv format")
-        exit(1)
-
-    # Check that output file path is a PDF file
-    if not output_file_path.lower().endswith(".pdf"):
-        print("ERROR: output file must be in .pdf format")
-        exit(1)
-
-    # Check that input file exists
-    if not os.path.isfile(input_file_path):
-        print("ERROR: input file must exist")
-        exit(1)
-
-    return input_file_path, output_file_path
+    return validate_file_paths(input_file_path, output_file_path)
 
 
 def add_text_box(figure, basis_x, basis_y, text, box_type):
@@ -265,7 +274,7 @@ def write_pdf_page(pdf: PdfPages, data):
     )
 
     # Loop through the data entries
-    for i, entry in enumerate(data):
+    for i, entry in tqdm(enumerate(data), total=len(data)):
         # Calculate the row and column of the current label
         row = N_ROWS - (i // N_COLUMNS) - 1
         column = i % N_COLUMNS
@@ -289,10 +298,10 @@ def write_pdf_page(pdf: PdfPages, data):
         # Text Box 1 (Location)
         # Different formats for the US and Canada
         if entry[COUNTRY] == "USA":
-            text_1 = "USA:{}:{} {} {} {} {}m".format(
+            text_1 = "USA:{}:{}Co {} {} {} {}m".format(
                 entry[STATE],
                 entry[COUNTY],
-                entry[CITY],
+                entry[PLACE],
                 entry[LATITUDE],
                 entry[LONGITUDE],
                 entry[ELEVATION],
@@ -300,9 +309,9 @@ def write_pdf_page(pdf: PdfPages, data):
         elif entry[COUNTRY] == "CAN":
             text_1 = "CANADA:{} {} {} {} {}m".format(
                 entry[STATE],
-                entry[CITY],
-                entry[LATITUDE],
-                entry[LONGITUDE],
+                entry[PLACE],
+                round(float(entry[LATITUDE]), 3),
+                round(float(entry[LONGITUDE]), 3),
                 entry[ELEVATION],
             )
         text_1 = tw.fill(text_1, 22, max_lines=3)
@@ -356,8 +365,10 @@ def main():
     with PdfPages(output_file_path) as pdf:
         # Calculate partition values
         part_size = N_ROWS * N_COLUMNS
+        n_parts = (len(input_data) // part_size) + 1
         part_start = 0
         part_end = part_size
+        page_i = 1
 
         # Check that the partition end doesn't exceed the total length of the data
         if part_end > len(input_data):
@@ -365,6 +376,7 @@ def main():
 
         # Loop through the data, writing one page per partition
         while part_start < len(input_data):
+            print("Page {}/{}".format(page_i, n_parts))
             write_pdf_page(pdf, input_data[part_start:part_end])
 
             # Increment the partition values
@@ -372,6 +384,7 @@ def main():
             part_end += part_size
             if part_end > len(input_data):
                 part_end = len(input_data)
+            page_i += 1
 
 
 if __name__ == "__main__":
