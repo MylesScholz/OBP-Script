@@ -277,10 +277,11 @@ def merge_files(base_file_path: str, append_file_path: str, output_file_path="")
             # Search for current row in base data (using keys)
             index = search_data_for_row(base_data, row)
 
-            if index == -1 and row["Dec. Lat."] != "" and row["Dec. Long."] != "":
+            if index == -1:
                 # The current row is new; append it to the base data
                 # (Exclude rows that don't have coordinates)
-                base_data.append(row)
+                if row["Dec. Lat."] != "" and row["Dec. Long."] != "":
+                    base_data.append(row)
             else:
                 # Fill in empty columns in the base data with values from the current row
                 for column in row:

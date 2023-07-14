@@ -73,13 +73,12 @@ This script (Merge_Process.bat) will combine, sort, and index two formatted data
 5. Wait while the program merges the data (this may take a minute, depending on the size of the input files).
 6. The resulting merged data will appear in the specified output file path.  
 
-   The merged data will not have duplicate entries, given that the combination of the following fields uniquely identify an entry:
-   * "iNaturalist Alias"
-   * "Sample ID"
-   * "Specimen ID"
-   * "Collection Day 1"
-   * "Month 1"
-   * "Year 1"
+   The script checks for duplicate entries by comparing each entry in the appending data to each entry in the base data. If an entry in the appending data matches in any of the following ways (checked in order), it will not be added to the merged file.
+   1. Observation No.: If the "Observation No." values are not empty, two entries match if their "Observation No." fields match.
+   2. URL, Sample ID, and Specimen ID: If the "Associated plant - Inaturalist URL" values are not empty, two entries match if their "Associated plant - Inaturalist URL", "Sample ID", and "Specimen ID" fields all match.
+   3. Alias, Date, Sample ID, and Specimen ID: In all other cases, two entries match if their "iNaturalist Alias", "Collection Day 1", "Month 1", "Year 1", "Sample ID", and "Specimen ID" fields all match.
+
+   Entries with empty "Dec. Lat." or "Dec. Long." fields will also not be added to the merged file.
 
    The script will index (assign a unique number to) the data in the "Observation No." field using the format YY#####, where YY is the two-digit abbreviation of the year when the script ran and ##### are five sequentially assigned digits. The script assigns these numbers by sorting the data by
    1. "Observation No."
