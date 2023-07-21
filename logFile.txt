@@ -114,3 +114,8 @@ ERROR - on 2023-07-13 17:50:12.974223 when making labels from "test_csv.csv" int
 SUCCESS - Made labels on 2023-07-13 18:09:47.493195
 SUCCESS - Made labels on 2023-07-13 18:36:13.290201
 ERROR - on 2023-07-14 09:03:24.462107 when retrieving 'Oregon Bee Atlas (Plant Images/SampleID)' observations
+ERROR - on 2023-07-20 14:32:54.731062 when merging "..\Duplicate Data\All Location Labels.csv" and "..\Duplicate Data\OBA_results_2023.csv" into "..\Duplicate Data\test.csv"
+ERROR - on 2023-07-20 14:50:49.525403 when merging "..\Duplicate Data\All Location Labels.csv" and "..\Duplicate Data\OBA_results_2023.csv" into "..\Duplicate Data\test.csv"
+SUCCESS - Merged data on 2023-07-20 15:20:23.833231
+ERROR - on 2023-07-20 16:52:35.896801 when merging "..\Duplicate Data\All Location Labels.csv" and "..\Duplicate Data\OBA_results_2023.csv" into "..\Duplicate Data\test.csv"
+SUCCESS - Merged data on 2023-07-20 17:12:00.616738

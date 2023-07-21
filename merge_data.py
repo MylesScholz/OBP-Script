@@ -71,29 +71,48 @@ def parse_command_line():
     return base_file_path, append_file_path, output_file_path
 
 
+def str_to_int_catch(string: str):
+    try:
+        value = int(string)
+    except:
+        value = string
+
+    return value
+
+
 def equal_identifiers(row1: dict, row2: dict):
-    if (
-        row1["Observation No."] == row2["Observation No."]
-        and row1["Observation No."] != ""
-        and row2["Observation No."] != ""
-    ):
+    obs_no_1 = str_to_int_catch(row1["Observation No."])
+    obs_no_2 = str_to_int_catch(row2["Observation No."])
+
+    sample_id_1 = str_to_int_catch(row1["Sample ID"])
+    sample_id_2 = str_to_int_catch(row2["Sample ID"])
+
+    specimen_id_1 = str_to_int_catch(row1["Specimen ID"])
+    specimen_id_2 = str_to_int_catch(row2["Specimen ID"])
+
+    day_1 = str_to_int_catch(row1["Collection Day 1"])
+    day_2 = str_to_int_catch(row2["Collection Day 1"])
+
+    year_1 = str_to_int_catch(row1["Year 1"])
+    year_2 = str_to_int_catch(row2["Year 1"])
+
+    if obs_no_1 != "" and obs_no_1 == obs_no_2:
         return True
     elif (
         row1["Associated plant - Inaturalist URL"]
         == row2["Associated plant - Inaturalist URL"]
         and row1["Associated plant - Inaturalist URL"] != ""
-        and row2["Associated plant - Inaturalist URL"] != ""
-        and row1["Sample ID"] == row2["Sample ID"]
-        and row1["Specimen ID"] == row2["Specimen ID"]
+        and sample_id_1 == sample_id_2
+        and specimen_id_1 == specimen_id_2
     ):
         return True
     elif (
         row1["iNaturalist Alias"] == row2["iNaturalist Alias"]
-        and row1["Sample ID"] == row2["Sample ID"]
-        and row1["Specimen ID"] == row2["Specimen ID"]
-        and row1["Collection Day 1"] == row2["Collection Day 1"]
+        and sample_id_1 == sample_id_2
+        and specimen_id_1 == specimen_id_2
+        and day_1 == day_2
         and row1["Month 1"] == row2["Month 1"]
-        and row1["Year 1"] == row2["Year 1"]
+        and year_1 == year_2
     ):
         return True
 
