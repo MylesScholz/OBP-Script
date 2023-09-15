@@ -8,12 +8,14 @@ import full_create_labels as fcl
 
 
 def main():
-    print("Pulling data...")
-    fdp.run()
+    observations_dict = fdp.run()
+
     print("Formatting data...")
-    ffd.run()
+    ffd.run(observations_dict)
+
     print("Merging data with database...")
     fmd.run()
+
     print("Creating labels...")
     fcl.run()
 
