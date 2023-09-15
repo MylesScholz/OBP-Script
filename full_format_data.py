@@ -4,18 +4,14 @@
 import csv
 
 
-SOURCES_FILE = "config/sources.txt"
+SOURCES_FILE = "config/sources.csv"
 HEADER_FORMAT_FILE = "config/header_format.txt"
 
 
 def get_sources():
-    # Read SOURCE_FILE for the sources (iNaturalist projects) to pull data from
-    sources = {}
-    with open(SOURCES_FILE) as sources_file:
-        for line in sources_file:
-            line = line.strip(" \r\n")
-            line = line.split(",")
-            sources[line[0]] = line[1]
+    # Read SOURCES_FILE for the sources (iNaturalist projects) to pull data from
+    with open(SOURCES_FILE, newline="") as sources_file:
+        sources = list(csv.DictReader(sources_file))
 
     return sources
 
@@ -28,22 +24,34 @@ def read_header_format():
     return output_header
 
 
-def format_data(sources: dict, observations_dict: dict, output_header: list):
-    for source_name in sources:
-        for observation in observations_dict[sources[source_name]]:
-            print("Formatting observation...")
+def format_data(sources: list, observations_dict: dict, output_header: list):
+    # Initialize formatted output dictionary
+    formatted_dict = {}
 
-    print(output_header)
+    for source in sources:
+        # Divide the formatted output dictionary by source
+        formatted_dict[source["Abbreviation"]] = []
+
+        for observation in observations_dict[source["Abbreviation"]]:
+            print("\tFormatting observation...")
+
+    print("\t", output_header)
 
 
 def run(observations_dict: dict):
+    print("Data Formatting")
+
     # Read the source names and ids (iNaturalist projects)
     sources = get_sources()
 
     # Read header from config/format_header.csv
     output_header = read_header_format()
 
-    print("Formatting...")
-    format_data(sources, observations_dict, output_header)
+    # Create a re-formatted dictionary containing the data
+    formatted_dict = format_data(sources, observations_dict, output_header)
 
-    print("Done.\n")
+    print("Data Formatting => Done\n")
+
+    # TODO: logging
+
+    return formatted_dict

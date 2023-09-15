@@ -9,9 +9,7 @@ import full_create_labels as fcl
 
 def main():
     observations_dict = fdp.run()
-
-    print("Formatting data...")
-    ffd.run(observations_dict)
+    formatted_dict = ffd.run(observations_dict)
 
     print("Merging data with database...")
     fmd.run()

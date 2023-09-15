@@ -1,14 +1,16 @@
 # Author: Myles Scholz
 # Created on September 15, 2023
 # Description: Module that pulls data from iNaturalist.org
+import csv
 import datetime
 import json
 import traceback
 
 import pyinaturalist
+from tqdm import tqdm
 
 
-SOURCES_FILE = "config/sources.txt"
+SOURCES_FILE = "config/sources.csv"
 PLACES_FILE = "places.json"
 
 
@@ -33,13 +35,9 @@ def get_year():
 
 
 def get_sources():
-    # Read SOURCE_FILE for the sources (iNaturalist projects) to pull data from
-    sources = {}
-    with open(SOURCES_FILE) as sources_file:
-        for line in sources_file:
-            line = line.strip(" \r\n")
-            line = line.split(",")
-            sources[line[0]] = line[1]
+    # Read SOURCES_FILE for the sources (iNaturalist projects) to pull data from
+    with open(SOURCES_FILE, newline="") as sources_file:
+        sources = list(csv.DictReader(sources_file))
 
     return sources
 
@@ -55,14 +53,12 @@ def pull_data(year, sources):
 
     # Initialize dict to capture results for each source
     observations_dict = {}
-    for source_name in sources:
-        print("\tPulling '{}' data...".format(source_name))
-
-        source_id = sources[source_name]
+    for source in sources:
+        print("\tPulling '{}' data...".format(source["Name"]))
 
         # Pull first page of observation data (maximum of 200 per page)
         reply_dict = pyinaturalist.v1.observations.get_observations(
-            d1=min_pull_date, project_id=source_id, per_page=200
+            d1=min_pull_date, project_id=source["ID"], per_page=200
         )
 
         page_i = 1
@@ -71,12 +67,12 @@ def pull_data(year, sources):
             # Get next 200 entries and append them to results
             reply_dict["results"] += pyinaturalist.v1.observations.get_observations(
                 d1=min_pull_date,
-                project_id=source_id,
+                project_id=source["ID"],
                 per_page=200,
                 page=page_i,
             )["results"]
 
-        observations_dict[source_id] = reply_dict["results"]
+        observations_dict[source["Abbreviation"]] = reply_dict["results"]
 
     return observations_dict
 
@@ -96,10 +92,12 @@ def write_to_places_file(places):
 def update_places(sources, observations_dict):
     known_places = read_places_file()
 
-    for source_name in sources:
-        print("\tUpdating places from '{}' data...".format(source_name))
+    for source in sources:
+        print("\tUpdating places from '{}' data...".format(source["Name"]))
 
-        for observation in observations_dict[sources[source_name]]:
+        for observation in tqdm(
+            observations_dict[source["Abbreviation"]], desc="\tObservations"
+        ):
             place_ids = observation["place_ids"]
 
             unknown_place_ids = []
@@ -145,7 +143,7 @@ def run():
     # Update known places
     update_places(sources, observations_dict)
 
-    print("Done.\n")
+    print("Data Pulling => Done\n")
 
     # TODO: logging
 
