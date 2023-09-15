@@ -19,7 +19,7 @@ def get_year():
     current_year = datetime.datetime.now().year
 
     # Get the year to pull data from
-    year_input = input("\tYear to Query: ")
+    year_input = input("    Year to Query: ")
 
     if (
         year_input.isnumeric()
@@ -29,7 +29,7 @@ def get_year():
         return year_input
     else:
         print(
-            "\tERROR: Invalid year argument, must be a four digit year less than the current year"
+            "        ERROR: Invalid year argument, must be a four digit year less than the current year"
         )
         exit(1)
 
@@ -54,16 +54,20 @@ def pull_data(year, sources):
     # Initialize dict to capture results for each source
     observations_dict = {}
     for source in sources:
-        print("\tPulling '{}' data...".format(source["Name"]))
+        print("    Pulling '{}' data...".format(source["Name"]))
 
         # Pull first page of observation data (maximum of 200 per page)
         reply_dict = pyinaturalist.v1.observations.get_observations(
             d1=min_pull_date, project_id=source["ID"], per_page=200
         )
 
-        page_i = 1
-        while page_i * 200 < int(reply_dict["total_results"]):
-            page_i += 1
+        n_pages = int(reply_dict["total_results"]) // 200
+        if int(reply_dict["total_results"]) > n_pages * 200:
+            n_pages += 1
+
+        for page_i in tqdm(
+            range(2, n_pages + 1), desc="        Observations", total=n_pages, initial=1
+        ):
             # Get next 200 entries and append them to results
             reply_dict["results"] += pyinaturalist.v1.observations.get_observations(
                 d1=min_pull_date,
@@ -93,10 +97,10 @@ def update_places(sources, observations_dict):
     known_places = read_places_file()
 
     for source in sources:
-        print("\tUpdating places from '{}' data...".format(source["Name"]))
+        print("    Updating places from '{}' data...".format(source["Name"]))
 
         for observation in tqdm(
-            observations_dict[source["Abbreviation"]], desc="\tObservations"
+            observations_dict[source["Abbreviation"]], desc="        Observations"
         ):
             place_ids = observation["place_ids"]
 
@@ -111,7 +115,7 @@ def update_places(sources, observations_dict):
                         unknown_place_ids
                     )
                 except Exception:
-                    print("\tERROR: Place look-up failed")
+                    print("        ERROR: Place look-up failed")
                     traceback.print_exc()
                 else:
                     for place in reply_dict["results"]:
@@ -137,8 +141,12 @@ def run():
     # Read the source names and ids to pull from (iNaturalist projects)
     sources = get_sources()
 
+    print()
+
     # Query the iNaturalist API for observations for each project
     observations_dict = pull_data(year, sources)
+
+    print()
 
     # Update known places
     update_places(sources, observations_dict)
