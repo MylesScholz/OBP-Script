@@ -66,7 +66,10 @@ def pull_data(year, sources):
             n_pages += 1
 
         for page_i in tqdm(
-            range(2, n_pages + 1), desc="        Observations", total=n_pages, initial=1
+            range(2, n_pages + 1),
+            desc="        Pages (200 entries)",
+            total=n_pages,
+            initial=1,
         ):
             # Get next 200 entries and append them to results
             reply_dict["results"] += pyinaturalist.v1.observations.get_observations(
