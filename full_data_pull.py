@@ -15,6 +15,10 @@ PLACES_FILE = "places.json"
 
 
 def get_year():
+    """
+    Gets a valid year from the user for querying iNaturalist
+    """
+
     # Get the current year
     current_year = datetime.datetime.now().year
 
@@ -43,6 +47,10 @@ def get_sources():
 
 
 def pull_data(year, sources):
+    """
+    Pulls observation data for a given year from the sources (iNaturalist projects) listed in config/sources.csv
+    """
+
     # If the year is not provided, use the current year
     if year == "" or year is None:
         # In theory, this should be unreachable
@@ -61,10 +69,12 @@ def pull_data(year, sources):
             d1=min_pull_date, project_id=source["ID"], per_page=200
         )
 
+        # Calculate the number of pages that need to be pulled
         n_pages = int(reply_dict["total_results"]) // 200
         if int(reply_dict["total_results"]) > n_pages * 200:
             n_pages += 1
 
+        # Pull data in 200 entry increments until all data is captured
         for page_i in tqdm(
             range(2, n_pages + 1),
             desc="        Pages (200 entries)",
@@ -79,12 +89,14 @@ def pull_data(year, sources):
                 page=page_i,
             )["results"]
 
+        # Store full data for this source under the source's abbreviation in the master dictionary
         observations_dict[source["Abbreviation"]] = reply_dict["results"]
 
     return observations_dict
 
 
 def read_places_file():
+    # Open places.json and load it as a Python dictionary
     with open(PLACES_FILE, "r") as places_file:
         known_places = json.load(places_file)
 
@@ -92,11 +104,15 @@ def read_places_file():
 
 
 def write_to_places_file(places):
+    # Write a Python dictionary to places.json
     with open(PLACES_FILE, "w") as places_file:
         places_file.write(json.dumps(places))
 
 
 def update_places(sources, observations_dict):
+    """
+    Reads the list of known place IDs from places.json and updates it with new data
+    """
     known_places = read_places_file()
 
     for source in sources:
@@ -105,13 +121,17 @@ def update_places(sources, observations_dict):
         for observation in tqdm(
             observations_dict[source["Abbreviation"]], desc="        Observations"
         ):
+            # Each observation has a list of place IDs (place_ids), which represent
+            # various jurisdictions that the observation is under
             place_ids = observation["place_ids"]
 
+            # Create a list of place_ids that are not in places.json
             unknown_place_ids = []
             for place_id in place_ids:
                 if str(place_id) not in known_places:
                     unknown_place_ids.append(place_id)
 
+            # Query iNaturalist for the names and administrative level of all unknown_place_ids
             if len(unknown_place_ids) > 0:
                 try:
                     reply_dict = pyinaturalist.v1.places.get_places_by_id(
@@ -121,6 +141,8 @@ def update_places(sources, observations_dict):
                     print("        ERROR: Place look-up failed")
                     traceback.print_exc()
                 else:
+                    # Add the place data to known_places for each place with administrative
+                    # level 0, 10, 20 (country, state, and county, respectively)
                     for place in reply_dict["results"]:
                         if (
                             place["admin_level"] == 0
@@ -132,6 +154,7 @@ def update_places(sources, observations_dict):
                                 place["name"],
                             ]
 
+    # Write the new known_places dictionary to places.json
     write_to_places_file(known_places)
 
 
