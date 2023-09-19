@@ -2,6 +2,7 @@
 # Created on September 15, 2023
 # Description: Module that formats data pulled from iNaturalist.org
 import csv
+import datetime
 import json
 import os
 
@@ -34,6 +35,13 @@ def read_header_format():
     return output_header
 
 
+def format_str(field: str):
+    if field is None:
+        return ""
+
+    return str(field)
+
+
 def format_name(user_login: str, user_name: str):
     user_first_name = user_first_initial = user_last_name = ""
 
@@ -59,6 +67,7 @@ def format_name(user_login: str, user_name: str):
         and user_first_initial == ""
         and user_last_name == ""
         and user_name != ""
+        and user_name is not None
     ):
         user_full_name_split = user_name.split(" ")
 
@@ -82,12 +91,15 @@ def get_ofvs_value(name: str, ofvs: list):
     # and return the associated value
     for field in ofvs:
         if field["name"] == name:
-            return field["value"]
+            return format_str(field["value"])
 
     return ""
 
 
 def format_month(decimal_month: str):
+    if decimal_month is None:
+        return ""
+
     month_numerals = [
         "I",
         "II",
@@ -107,6 +119,9 @@ def format_month(decimal_month: str):
 
 
 def format_time(observed_on):
+    if observed_on is None or type(observed_on) != datetime.datetime:
+        return ""
+
     time = str(observed_on.hour) + observed_on.strftime(":%M")
 
     return time
@@ -139,6 +154,9 @@ def look_up_place(place_ids: list):
 
 
 def format_state(state_name: str):
+    if state_name is None:
+        return ""
+
     # Abbreviate state if possible
     abbreviation = state_name
 
@@ -202,8 +220,12 @@ def format_state(state_name: str):
 
 
 def format_location(place_guess):
-    # Parses a comma-separated place guess for a specific location name.
-    # Assumes the location name is the first item.
+    """
+    Parses a comma-separated place guess for a specific location name.
+    Assumes the location name is the first item.
+    """
+    if place_guess is None or place_guess == "":
+        return ""
 
     place_guess_split = place_guess.split(", ")
 
@@ -213,11 +235,19 @@ def format_location(place_guess):
     return ""
 
 
-def format_coordinate(coordinate):
-    if coordinate is None or coordinate == "":
-        return ""
+def format_coordinates(location):
+    if location is None:
+        return "", ""
 
-    return "{:.4f}".format(float(coordinate))
+    latitude = longitude = ""
+
+    if location[0] is not None:
+        latitude = "{:.4f}".format(float(location[0]))
+
+    if location[1] is not None:
+        longitude = "{:.4f}".format(float(location[1]))
+
+    return latitude, longitude
 
 
 def read_hgt(file_path: str, latitude: str, longitude: str):
@@ -245,7 +275,7 @@ def read_hgt(file_path: str, latitude: str, longitude: str):
         return str(data_int)
 
 
-def format_elevation(latitude, longitude):
+def format_elevation(latitude: str, longitude: str):
     """
     Looks up elevation for a given longitude and latitude using data from
     the Shuttle Radar Topography Mission (SRTMGL1), which is stored in
@@ -297,6 +327,13 @@ def format_elevation(latitude, longitude):
 
 
 def format_family(identifications):
+    if (
+        identifications is None
+        or len(identifications) < 1
+        or type(identifications) != list
+    ):
+        return ""
+
     for id in identifications:
         if id["taxon"]["rank"] == "family":
             return id["taxon"]["name"]
@@ -306,6 +343,16 @@ def format_family(identifications):
                     return ancestor["name"]
 
     return ""
+
+
+def format_scientific_name(taxon):
+    if taxon is None:
+        return ""
+
+    if taxon["name"] is None:
+        return ""
+
+    return taxon["name"]
 
 
 def format_data(sources: list, observations_dict: dict, output_header: list):
@@ -327,10 +374,14 @@ def format_data(sources: list, observations_dict: dict, output_header: list):
                 formatted_observation[output_header[i]] = ""
 
             # iNaturalist ID
-            formatted_observation[output_header[6]] = observation["user"]["id"]
+            formatted_observation[output_header[6]] = format_str(
+                observation["user"]["id"]
+            )
 
             # iNaturalist Alias
-            formatted_observation[output_header[7]] = observation["user"]["login"]
+            formatted_observation[output_header[7]] = format_str(
+                observation["user"]["login"]
+            )
 
             # Collector - First Name
             # Collector - First Initial
@@ -359,11 +410,15 @@ def format_data(sources: list, observations_dict: dict, output_header: list):
             # Time 1
             observed_on_details = observation["observed_on_details"]
 
-            formatted_observation[output_header[13]] = observed_on_details["day"]
+            formatted_observation[output_header[13]] = format_str(
+                observed_on_details["day"]
+            )
             formatted_observation[output_header[14]] = format_month(
                 observed_on_details["month"]
             )
-            formatted_observation[output_header[15]] = observed_on_details["year"]
+            formatted_observation[output_header[15]] = format_str(
+                observed_on_details["year"]
+            )
             formatted_observation[output_header[16]] = format_time(
                 observation["observed_on"]
             )
@@ -400,16 +455,15 @@ def format_data(sources: list, observations_dict: dict, output_header: list):
 
             # Dec. Lat.
             # Dec. Long.
-            latitude = observation["location"][0]
-            longitude = observation["location"][1]
+            latitude, longitude = format_coordinates(observation["location"])
 
-            formatted_observation[output_header[28]] = format_coordinate(latitude)
-            formatted_observation[output_header[29]] = format_coordinate(longitude)
+            formatted_observation[output_header[28]] = latitude
+            formatted_observation[output_header[29]] = longitude
 
             # Lat/Long Accuracy
-            formatted_observation[output_header[30]] = observation[
-                "positional_accuracy"
-            ]
+            formatted_observation[output_header[30]] = format_str(
+                observation["positional_accuracy"]
+            )
 
             # Elevation
             formatted_observation[output_header[31]] = format_elevation(
@@ -425,8 +479,10 @@ def format_data(sources: list, observations_dict: dict, output_header: list):
             formatted_observation[output_header[33]] = format_family(
                 observation["identifications"]
             )
-            formatted_observation[output_header[34]] = observation["taxon"]["name"]
-            formatted_observation[output_header[35]] = observation["uri"]
+            formatted_observation[output_header[34]] = format_scientific_name(
+                observation["taxon"]
+            )
+            formatted_observation[output_header[35]] = format_str(observation["uri"])
 
             # Add the eight blank fields at the end of the formatted output
             # (Det. Volunteer - Family, Det. Volunteer - Genus, Det. Volunteer - Species,
@@ -435,9 +491,23 @@ def format_data(sources: list, observations_dict: dict, output_header: list):
             for i in range(7):
                 formatted_observation[output_header[36 + i]] = ""
 
-            # TODO: Append the formatted observation, expanding by the number of bees collected
+            specimen_id = formatted_observation[output_header[12]]
+            if specimen_id != "":
+                try:
+                    specimen_id = int(specimen_id)
+                except ValueError:
+                    formatted_dict[source["Abbreviation"]].append(formatted_observation)
+                else:
+                    if specimen_id >= 1:
+                        for i in range(1, specimen_id + 1):
+                            dup_observation = formatted_observation.copy()
+                            dup_observation[output_header[12]] = str(i)
 
-            # formatted_dict[source["Abbreviation"]].append(formatted_observation)
+                            formatted_dict[source["Abbreviation"]].append(
+                                dup_observation
+                            )
+
+    return formatted_dict
 
 
 def run(observations_dict: dict):
