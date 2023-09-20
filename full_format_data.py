@@ -6,6 +6,8 @@ import datetime
 import json
 import os
 
+from tqdm import tqdm
+
 
 SOURCES_FILE = "config/sources.csv"
 HEADER_FORMAT_FILE = "config/header_format.txt"
@@ -365,7 +367,9 @@ def format_data(sources: list, observations_dict: dict, output_header: list):
         # Divide the formatted output dictionary by source
         formatted_dict[source["Abbreviation"]] = []
 
-        for observation in observations_dict[source["Abbreviation"]]:
+        for observation in tqdm(
+            observations_dict[source["Abbreviation"]], desc="        Observations"
+        ):
             formatted_observation = {}
 
             # Add the six blank fields at the start of the formatted output

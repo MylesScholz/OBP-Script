@@ -15,12 +15,18 @@ def main():
     # with open("observations_dict.pkl", "wb") as file:
     #     pickle.dump(observations_dict, file, pickle.HIGHEST_PROTOCOL)
 
-    with open("observations_dict.pkl", "rb") as file:
-        observations_dict = pickle.load(file)
-        formatted_dict = ffd.run(observations_dict)
+    # with open("observations_dict.pkl", "rb") as file:
+    #     observations_dict = pickle.load(file)
 
-    # print("Merging data with database...")
-    # fmd.run()
+    # formatted_dict = ffd.run(observations_dict)
+
+    # with open("formatted_dict.pkl", "wb") as file:
+    #     pickle.dump(formatted_dict, file, pickle.HIGHEST_PROTOCOL)
+
+    with open("formatted_dict.pkl", "rb") as file:
+        formatted_dict = pickle.load(file)
+
+    fmd.run(formatted_dict)
 
     # print("Creating labels...")
     # fcl.run()
