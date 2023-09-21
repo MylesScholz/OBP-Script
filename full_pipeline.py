@@ -26,10 +26,9 @@ def main():
     with open("formatted_dict.pkl", "rb") as file:
         formatted_dict = pickle.load(file)
 
-    fmd.run(formatted_dict)
+    merged_dataset = fmd.run(formatted_dict)
 
-    # print("Creating labels...")
-    # fcl.run()
+    fcl.run(merged_dataset)
 
 
 if __name__ == "__main__":

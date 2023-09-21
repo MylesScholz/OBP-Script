@@ -157,6 +157,19 @@ def look_up_place(place_ids: list):
     return country, state, county
 
 
+def format_country(country_name: str):
+    country_abbreviation = country_name
+
+    if country_name == "United States":
+        country_abbreviation = "USA"
+    elif country_name == "Canada":
+        country_abbreviation = "CAN"
+
+    # Insert other known abbreviations here
+
+    return country_abbreviation
+
+
 def format_state(state_name: str):
     if state_name is None:
         return ""
@@ -445,7 +458,7 @@ def format_data(sources: list, observations_dict: dict, output_header: list):
             # County
             country, state, county = look_up_place(observation["place_ids"])
 
-            formatted_observation[output_header[22]] = country
+            formatted_observation[output_header[22]] = format_country(country)
             formatted_observation[output_header[23]] = format_state(state)
             formatted_observation[output_header[24]] = county
 

@@ -144,11 +144,179 @@ def get_labels_config():
     return labels_config
 
 
+def add_text_box(figure, basis_x, basis_y, text, box_type):
+    """
+    Adds a text box directly to the given figure (no plots used)
+    """
+    # Fetch the specified text box layout and formatting preset
+    box_obj = TEXT_BOXES[box_type]
+
+    # Add the text box
+    text = figure.text(
+        basis_x + box_obj["x_position"],
+        basis_y + box_obj["y_position"],
+        text,
+        size=box_obj["font_size"],
+        name=box_obj["font_family"],
+        style=box_obj["font_style"],
+        linespacing=box_obj["line_height"],
+        ha="left",
+        va=box_obj["alignment"],
+        rotation=box_obj["rotation"],
+        transform=figure.dpi_scale_trans,
+        wrap=True,
+    )
+
+    # Resize text to fit left of the cutoff
+    r = figure.canvas.get_renderer()
+    text_bbox = text.get_window_extent(renderer=r)
+    # Decrement font size until the cutoff no longer overlaps with the text box
+    while text_bbox.fully_containsx((TEXT_CUTOFF + basis_x) * figure.dpi):
+        text.set_fontsize(text.get_fontsize() - 0.1)
+        text_bbox = text.get_window_extent(renderer=r)
+
+
+def add_data_matrix(figure, basis_x, basis_y, data):
+    """
+    Generates and adds a rectangular (8 x 18) data matrix to the given figure
+    """
+
+    # Generate the data matrix using the Treepoem library (Python wrapper for BWIPP)
+    image = tp.generate_barcode(
+        barcode_type="datamatrixrectangular",
+        data=data,
+        options={"version": "8x18"},
+    )
+    # Convert the PIL Image object returned above into a Numpy array
+    data_matrix = np.asarray(image)
+    # Rotate the matrix 90 degrees anticlockwise
+    data_matrix = np.rot90(image)
+
+    # Calculate position of the bottom left corner of the data matrix relative
+    # to the whole figure
+    abs_x = basis_x + DATA_MATRIX["x_position"]
+    abs_y = basis_y + DATA_MATRIX["y_position"]
+    # Set the width to the specified value
+    width = DATA_MATRIX["width"]
+    # Calculate the height with the given width, maintaing the aspect ratio
+    # The aspect ratio is inverted because "image" was not rotated
+    height = (image.width / image.height) * width
+
+    # Create a matplotlib bounding box and transform it from inches to pixels
+    data_matrix_bbox = Bbox.from_bounds(abs_x, abs_y, width, height)
+    data_matrix_bbox = TransformedBbox(data_matrix_bbox, figure.dpi_scale_trans)
+
+    # Add the data matrix directly to the figuer as an image with a given bounding box
+    figure.add_artist(
+        BboxImage(
+            data_matrix_bbox,
+            cmap="binary_r",  # Greyscale colorscheme with high values being lighter
+            interpolation="none",  # Avoid artifacts from resizing the image
+            data=data_matrix,
+            zorder=1000,  # Bring image to the front
+        )
+    )
+
+
+def write_pdf_page(pdf: PdfPages, data):
+    """
+    Creates a PDF page of labels from a given list of data entries
+    """
+
+    # Create a matplotlib Figure
+    figure = plt.figure(
+        figsize=(LETTER_WIDTH, LETTER_HEIGHT), dpi=600, layout="constrained"
+    )
+
+    # Loop through the data entries
+    for i, entry in tqdm(enumerate(data), desc="        Labels", total=len(data)):
+        # Calculate the row and column of the current label
+        row = N_ROWS - (i // N_COLUMNS) - 1
+        column = i % N_COLUMNS
+
+        # Calculate basis coordinates for the current label
+        # Label text will be positioned relative to these coordinates
+        basis_x = HORIZONTAL_MARGIN + (column * (LABEL_WIDTH + HORIZONTAL_SPACING))
+        basis_y = VERTICAL_MARGIN + (row * (LABEL_HEIGHT + VERTICAL_SPACING))
+
+        # Bounding rectangle to aid layout editing
+        # rectangle = plt.Rectangle(
+        #     (basis_x, basis_y),
+        #     LABEL_WIDTH,
+        #     LABEL_HEIGHT,
+        #     fill=False,
+        #     linewidth=0.5,
+        #     transform=figure.dpi_scale_trans,
+        # )
+        # figure.add_artist(rectangle)
+
+        # Text Box 1 (Location)
+        # Different formats for the US and Canada
+        if entry[COUNTRY] == "USA":
+            text_1 = "USA:{}:{}Co {} {} {} {}m".format(
+                entry[STATE],
+                entry[COUNTY],
+                entry[PLACE],
+                entry[LATITUDE],
+                entry[LONGITUDE],
+                entry[ELEVATION],
+            )
+        elif entry[COUNTRY] == "CAN":
+            text_1 = "CANADA:{} {} {} {} {}m".format(
+                entry[STATE],
+                entry[PLACE],
+                round(float(entry[LATITUDE]), 3),
+                round(float(entry[LONGITUDE]), 3),
+                entry[ELEVATION],
+            )
+        text_1 = tw.fill(text_1, 22, max_lines=3)
+
+        add_text_box(
+            figure,
+            basis_x,
+            basis_y,
+            text_1,
+            "location",
+        )
+
+        # Text Box 2 (Date)
+        text_2 = "{}.{}{}-{}.{}".format(
+            entry[DAY],
+            entry[MONTH],
+            entry[YEAR],
+            entry[SAMPLE_ID],
+            entry[SPECIMEN_ID],
+        )
+        add_text_box(figure, basis_x, basis_y, text_2, "date")
+
+        # Text Box 3 (Collector and Method)
+        text_3 = "{}{} {}".format(
+            entry[FIRST_INITIAL],
+            entry[LAST_NAME],
+            entry[METHOD],
+        )
+        add_text_box(figure, basis_x, basis_y, text_3, "name")
+
+        # Text Box 4 (Observation No.)
+        text_4 = entry[OBSERVATION_NUMBER]
+        add_text_box(figure, basis_x, basis_y, text_4, "number")
+
+        # Barcode (Data Matrix of Observation No.)
+        add_data_matrix(figure, basis_x, basis_y, text_4)
+
+    # Save the figure to a new page of the PDF
+    pdf.savefig(figure)
+
+
 def run(dataset: list):
     print("Creating Labels")
 
     labels_config = get_labels_config()
     output_file_path = labels_config["Output File Path"]
+    starting_row = labels_config["Starting Row"]
+
+    # Truncate dataset to create labels only from the given starting row
+    dataset = dataset[starting_row:]
 
     # Open a PDF file
     with PdfPages(output_file_path) as pdf:
@@ -165,7 +333,7 @@ def run(dataset: list):
 
         # Loop through the data, writing one page per partition
         while part_start < len(dataset):
-            print("Page {}/{}".format(page_i, n_parts))
+            print("    Page {}/{}".format(page_i, n_parts))
             write_pdf_page(pdf, dataset[part_start:part_end])
 
             # Increment the partition values
