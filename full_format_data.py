@@ -9,16 +9,18 @@ import os
 from tqdm import tqdm
 
 
+# File Name Constants
 SOURCES_FILE = "config/sources.csv"
 HEADER_FORMAT_FILE = "config/header_format.txt"
 USER_NAMES_FILE = "data/usernames.csv"
 PLACES_FILE = "places.json"
 
+# Folder Name Constant
 ELEVATION_DATA_FOLDER = "data/elevation/"
 
+# Column Name Constants
 SAMPLE_ID_FIELD_NAME = "Sample ID."
 BEES_COLLECTED_FIELD_NAME = "Number of bees collected"
-SITE_DESCRIPTION_FIELD_NAME = ""
 
 
 def get_sources():

@@ -9,8 +9,33 @@ import os
 from tqdm import tqdm
 
 
+# File Name Constants
 SOURCES_FILE = "config/sources.csv"
 MERGE_CONFIG_FILE = "config/merge_config.csv"
+
+# Column Name Constants
+
+# Observation Number
+OBSERVATION_NUMBER = "Observation No."
+
+# Collector
+ALIAS = "iNaturalist Alias"
+FIRST_NAME = "Collector - First Name"
+LAST_NAME = "Collector - Last Name"
+
+# IDs and Date
+SAMPLE_ID = "Sample ID"
+SPECIMEN_ID = "Specimen ID"
+DAY = "Collection Day 1"
+MONTH = "Month 1"
+YEAR = "Year 1"
+
+# Location
+LATITUDE = "Dec. Lat."
+LONGITUDE = "Dec. Long."
+
+# URL
+URL = "Associated plant - Inaturalist URL"
 
 
 def get_sources():
@@ -61,37 +86,36 @@ def equal_identifiers(row1: dict, row2: dict):
     3. iNaturalist Alias, Sample ID, Specimen ID, Collection Day 1, Month 1, and Year 1
     """
 
-    obs_no_1 = str_to_int_catch(row1["Observation No."])
-    obs_no_2 = str_to_int_catch(row2["Observation No."])
+    obs_no_1 = str_to_int_catch(row1[OBSERVATION_NUMBER])
+    obs_no_2 = str_to_int_catch(row2[OBSERVATION_NUMBER])
 
-    sample_id_1 = str_to_int_catch(row1["Sample ID"])
-    sample_id_2 = str_to_int_catch(row2["Sample ID"])
+    sample_id_1 = str_to_int_catch(row1[SAMPLE_ID])
+    sample_id_2 = str_to_int_catch(row2[SAMPLE_ID])
 
-    specimen_id_1 = str_to_int_catch(row1["Specimen ID"])
-    specimen_id_2 = str_to_int_catch(row2["Specimen ID"])
+    specimen_id_1 = str_to_int_catch(row1[SPECIMEN_ID])
+    specimen_id_2 = str_to_int_catch(row2[SPECIMEN_ID])
 
-    day_1 = str_to_int_catch(row1["Collection Day 1"])
-    day_2 = str_to_int_catch(row2["Collection Day 1"])
+    day_1 = str_to_int_catch(row1[DAY])
+    day_2 = str_to_int_catch(row2[DAY])
 
-    year_1 = str_to_int_catch(row1["Year 1"])
-    year_2 = str_to_int_catch(row2["Year 1"])
+    year_1 = str_to_int_catch(row1[YEAR])
+    year_2 = str_to_int_catch(row2[YEAR])
 
     if obs_no_1 != "" and obs_no_1 == obs_no_2:
         return True
     elif (
-        row1["Associated plant - Inaturalist URL"]
-        == row2["Associated plant - Inaturalist URL"]
-        and row1["Associated plant - Inaturalist URL"] != ""
+        row1[URL] == row2[URL]
+        and row1[URL] != ""
         and sample_id_1 == sample_id_2
         and specimen_id_1 == specimen_id_2
     ):
         return True
     elif (
-        row1["iNaturalist Alias"] == row2["iNaturalist Alias"]
+        row1[ALIAS] == row2[ALIAS]
         and sample_id_1 == sample_id_2
         and specimen_id_1 == specimen_id_2
         and day_1 == day_2
-        and row1["Month 1"] == row2["Month 1"]
+        and row1[MONTH] == row2[MONTH]
         and year_1 == year_2
     ):
         return True
@@ -193,47 +217,39 @@ def compare_rows(row1: dict, row2: dict):
 
     # First, compare "Observation No."
     observation_no_comparison = compare_numerical_string(
-        row1["Observation No."], row2["Observation No."]
+        row1[OBSERVATION_NUMBER], row2[OBSERVATION_NUMBER]
     )
     if observation_no_comparison != 0:
         return observation_no_comparison
 
     # Second, compare "Collector - Last Name"
-    last_name_comparison = compare_string(
-        row1["Collector - Last Name"], row2["Collector - Last Name"]
-    )
+    last_name_comparison = compare_string(row1[LAST_NAME], row2[LAST_NAME])
     if last_name_comparison != 0:
         return last_name_comparison
 
     # Third, compare "Collector - First Name"
-    first_name_comparison = compare_string(
-        row1["Collector - First Name"], row2["Collector - First Name"]
-    )
+    first_name_comparison = compare_string(row1[FIRST_NAME], row2[FIRST_NAME])
     if first_name_comparison != 0:
         return first_name_comparison
 
     # Fourth, compare "Month 1"
-    month_comparison = compare_month(row1["Month 1"], row2["Month 1"])
+    month_comparison = compare_month(row1[MONTH], row2[MONTH])
     if month_comparison != 0:
         return month_comparison
 
     # Fifth, compare "Collection Day 1"
-    day_comparison = compare_numerical_string(
-        row1["Collection Day 1"], row2["Collection Day 1"]
-    )
+    day_comparison = compare_numerical_string(row1[DAY], row2[DAY])
     if day_comparison != 0:
         return day_comparison
 
     # Sixth, compare "Sample ID"
-    sample_id_comparison = compare_numerical_string(
-        row1["Sample ID"], row2["Sample ID"]
-    )
+    sample_id_comparison = compare_numerical_string(row1[SAMPLE_ID], row2[SAMPLE_ID])
     if sample_id_comparison != 0:
         return sample_id_comparison
 
     # Seventh, compare "Specimen ID"
     specimen_id_comparison = compare_numerical_string(
-        row1["Specimen ID"], row2["Specimen ID"]
+        row1[SPECIMEN_ID], row2[SPECIMEN_ID]
     )
     if specimen_id_comparison != 0:
         return specimen_id_comparison
@@ -282,7 +298,7 @@ def merge_data(sources: list, dataset: list, formatted_dict: dict):
             if index == -1:
                 # The current row is new; append it to the base data
                 # (Exclude rows that don't have coordinates)
-                if row["Dec. Lat."] != "" and row["Dec. Long."] != "":
+                if row[LATITUDE] != "" and row[LONGITUDE] != "":
                     dataset.append(row)
             else:
                 # Fill in empty columns in the base data with values from the current row
@@ -303,8 +319,8 @@ def merge_data(sources: list, dataset: list, formatted_dict: dict):
         last_observation_no_string = ""
         last_observation_no_index = -1
         for i in range(len(dataset) - 1, -1, -1):
-            if dataset[i]["Observation No."] != "":
-                last_observation_no_string = dataset[i]["Observation No."]
+            if dataset[i][OBSERVATION_NUMBER] != "":
+                last_observation_no_string = dataset[i][OBSERVATION_NUMBER]
                 last_observation_no_index = i
                 break
 
@@ -320,7 +336,7 @@ def merge_data(sources: list, dataset: list, formatted_dict: dict):
         # Add observation numbers sequentially
         for i in range(last_observation_no_index + 1, len(dataset)):
             if not row_is_empty(dataset[i]):
-                dataset[i]["Observation No."] = str(next_observation_no)
+                dataset[i][OBSERVATION_NUMBER] = str(next_observation_no)
                 next_observation_no += 1
 
     return dataset
