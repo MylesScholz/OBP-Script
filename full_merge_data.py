@@ -4,6 +4,9 @@
 import csv
 import datetime
 import functools
+import os
+
+from tqdm import tqdm
 
 
 SOURCES_FILE = "config/sources.csv"
@@ -21,8 +24,7 @@ def get_sources():
 def get_merge_config():
     # Read merge_config.csv to get the input and output file paths
     with open(MERGE_CONFIG_FILE, newline="") as merge_config_file:
-        csv_reader = csv.DictReader(merge_config_file)
-        merge_config = csv_reader[0]
+        merge_config = list(csv.DictReader(merge_config_file))[0]
 
     return merge_config
 
@@ -38,6 +40,10 @@ def read_dataset(merge_config: dict):
 
 
 def str_to_int_catch(string: str):
+    """
+    Attempts to convert a string to an integer, catching errors if unsuccessful
+    """
+
     try:
         value = int(string)
     except:
@@ -47,6 +53,14 @@ def str_to_int_catch(string: str):
 
 
 def equal_identifiers(row1: dict, row2: dict):
+    """
+    A Boolean function that compares two rows of formatted data
+    Returns true if there is a match of any of the following, in order:
+    1. Observation No.
+    2. Associated plant - Inaturalist URL, Sample ID, and Specimen ID
+    3. iNaturalist Alias, Sample ID, Specimen ID, Collection Day 1, Month 1, and Year 1
+    """
+
     obs_no_1 = str_to_int_catch(row1["Observation No."])
     obs_no_2 = str_to_int_catch(row2["Observation No."])
 
@@ -98,6 +112,10 @@ def search_data_for_row(data: list, row: dict):
 
 
 def compare_numerical_string(string1: str, string2: str):
+    """
+    A comparison function for two strings of numbers
+    """
+
     # Treat an empty string as the largest value
     if string1 == "" and string2 != "":
         return 1
@@ -119,6 +137,11 @@ def compare_numerical_string(string1: str, string2: str):
 
 
 def compare_string(string1, string2):
+    """
+    A comparison function for strings
+    Treats empty strings as the largest value (opposite of default str comparison)
+    """
+
     # Treat an empty string as the largest value
     if string1 == "" and string2 != "":
         return 1
@@ -131,6 +154,10 @@ def compare_string(string1, string2):
 
 
 def compare_month(month1: str, month2: str):
+    """
+    A comparison function for formatted months (Roman numerals 1-12)
+    """
+
     # Treat empty strings as the largest value
     if month1 == "" and month2 != "":
         return 1
@@ -139,6 +166,7 @@ def compare_month(month1: str, month2: str):
     if month1 == "" and month2 == "":
         return 0
 
+    # Dict linking Roman numerals to decimal values
     months = {
         "I": 1,
         "II": 2,
@@ -154,10 +182,15 @@ def compare_month(month1: str, month2: str):
         "XII": 12,
     }
 
+    # Return comparison of decimal value of given months
     return (months[month1] > months[month2]) - (months[month1] < months[month2])
 
 
 def compare_rows(row1: dict, row2: dict):
+    """
+    Custom comparison function for sorting merged data
+    """
+
     # First, compare "Observation No."
     observation_no_comparison = compare_numerical_string(
         row1["Observation No."], row2["Observation No."]
@@ -209,6 +242,7 @@ def compare_rows(row1: dict, row2: dict):
 
 
 def row_is_empty(row: dict):
+    # Loop through columns, checking for any non-empty strings
     for column in row:
         if row[column] != "":
             return False
@@ -217,25 +251,31 @@ def row_is_empty(row: dict):
 
 
 def merge_data(sources: list, dataset: list, formatted_dict: dict):
+    """
+    Merges formatted iNaturalist data and a pre-existing dataset into a single sorted and indexed dataset
+    dataset and each entry in formatted_dict must have identical headers
+    """
+
+    # formatted_dict is divided by iNaturalist source, so loop through each
     for source in sources:
-        print("    Merging '{}' data...".format(source["Name"]))
+        print("    Merging '{}' data with dataset...".format(source["Name"]))
 
         append_data = formatted_dict[source["Abbreviation"]]
 
         # Confirm header correspondence between base and append files
-        base_header = dataset[0].keys()
+        dataset_header = dataset[0].keys()
         append_header = append_data[0].keys()
         if any(
             [
                 base_column != append_column
-                for base_column, append_column in zip(base_header, append_header)
+                for base_column, append_column in zip(dataset_header, append_header)
             ]
         ):
             print("ERROR: base and append file headers do not match")
             exit(1)
 
         # Loop through the data to append, checking for duplicates and updates
-        for row in append_data:
+        for row in tqdm(append_data, desc="        Entries"):
             # Search for current row in base data (using keys)
             index = search_data_for_row(dataset, row)
 
@@ -248,7 +288,7 @@ def merge_data(sources: list, dataset: list, formatted_dict: dict):
                 # Fill in empty columns in the base data with values from the current row
                 for column in row:
                     if (
-                        column in base_header
+                        column in dataset_header
                         and dataset[index][column] == ""
                         and row[column] != ""
                     ):
@@ -287,7 +327,18 @@ def merge_data(sources: list, dataset: list, formatted_dict: dict):
 
 
 def write_dataset(merge_config: dict, merged_dataset: list):
-    pass
+    """
+    Writes a dataset to the Output File Path specified in merge_config as a CSV file
+    """
+
+    output_file_path = os.path.relpath(merge_config["Output File Path"])
+    print("    Writing merged data to '{}'...".format(output_file_path))
+
+    dataset_header = merged_dataset[0].keys()
+    with open(output_file_path, "w", newline="") as output_file:
+        csv_writer = csv.DictWriter(output_file, fieldnames=dataset_header)
+        csv_writer.writeheader()
+        csv_writer.writerows(merged_dataset)
 
 
 def run(formatted_dict: dict):
