@@ -144,6 +144,30 @@ def get_labels_config():
     return labels_config
 
 
+def validate_starting_row(starting_row_entry: str, maximum: int):
+    try:
+        starting_row = int(starting_row_entry)
+
+        if starting_row < 0 or starting_row > maximum:
+            starting_row = 0
+    except:
+        starting_row = 0
+
+    return starting_row
+
+
+def validate_ending_row(ending_row_entry: str, default: int, starting_row: int):
+    try:
+        ending_row = int(ending_row_entry)
+
+        if ending_row < starting_row:
+            ending_row = default
+    except:
+        ending_row = default
+
+    return ending_row
+
+
 def add_text_box(figure, basis_x, basis_y, text, box_type):
     """
     Adds a text box directly to the given figure (no plots used)
@@ -311,12 +335,16 @@ def write_pdf_page(pdf: PdfPages, data):
 def run(dataset: list):
     print("Creating Labels")
 
+    # Read configuration file
     labels_config = get_labels_config()
     output_file_path = labels_config["Output File Path"]
-    starting_row = labels_config["Starting Row"]
+    starting_row = validate_starting_row(labels_config["Starting Row"], len(dataset))
+    ending_row = validate_ending_row(
+        labels_config["Ending Row"], len(dataset), starting_row
+    )
 
-    # Truncate dataset to create labels only from the given starting row
-    dataset = dataset[starting_row:]
+    # Truncate dataset to create labels only from the given starting row to the ending row
+    dataset = dataset[starting_row:ending_row]
 
     # Open a PDF file
     with PdfPages(output_file_path) as pdf:

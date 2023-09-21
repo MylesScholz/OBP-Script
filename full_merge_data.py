@@ -12,6 +12,7 @@ from tqdm import tqdm
 # File Name Constants
 SOURCES_FILE = "config/sources.csv"
 MERGE_CONFIG_FILE = "config/merge_config.csv"
+LABELS_CONFIG_FILE = "config/labels_config.csv"
 
 # Column Name Constants
 
@@ -257,15 +258,6 @@ def compare_rows(row1: dict, row2: dict):
     return 0
 
 
-def row_is_empty(row: dict):
-    # Loop through columns, checking for any non-empty strings
-    for column in row:
-        if row[column] != "":
-            return False
-
-    return True
-
-
 def merge_data(sources: list, dataset: list, formatted_dict: dict):
     """
     Merges formatted iNaturalist data and a pre-existing dataset into a single sorted and indexed dataset
@@ -310,34 +302,68 @@ def merge_data(sources: list, dataset: list, formatted_dict: dict):
                     ):
                         dataset[index][column] = row[column]
 
-        # Sort and index the merged data (base_data)
+    return dataset
 
-        # Sort with a custom comparison function
-        dataset.sort(key=functools.cmp_to_key(compare_rows))
 
-        # Search through sorted data backwards to find the last observation number
-        last_observation_no_string = ""
-        last_observation_no_index = -1
-        for i in range(len(dataset) - 1, -1, -1):
-            if dataset[i][OBSERVATION_NUMBER] != "":
-                last_observation_no_string = dataset[i][OBSERVATION_NUMBER]
-                last_observation_no_index = i
-                break
+def store_new_observation_index(index: int):
+    # Read the labels configuration file
+    with open(LABELS_CONFIG_FILE, newline="") as labels_config_file:
+        labels_config = list(csv.DictReader(labels_config_file))[0]
 
-        if last_observation_no_string != "" and last_observation_no_string.isnumeric():
-            # Convert the observation number to an integer and add one to get the next number
-            last_observation_no = int(last_observation_no_string)
-            next_observation_no = last_observation_no + 1
-        else:
-            # No previous observation number in the base data, so start at zero (plus the year prefix)
-            current_year = str(datetime.datetime.now().year)[2:]
-            next_observation_no = int(current_year + "00000")
+    # Update the "Starting Row" field with the index of the first new observation
+    labels_config["Starting Row"] = index
 
-        # Add observation numbers sequentially
-        for i in range(last_observation_no_index + 1, len(dataset)):
-            if not row_is_empty(dataset[i]):
-                dataset[i][OBSERVATION_NUMBER] = str(next_observation_no)
-                next_observation_no += 1
+    # Write the updated dict to the configuration file
+    labels_config_header = labels_config.keys()
+    with open(LABELS_CONFIG_FILE, newline="") as labels_config_file:
+        csv_writer = csv.DictWriter(labels_config_file, fieldnames=labels_config_header)
+        csv_writer.writeheader()
+        csv_writer.writerow(labels_config)
+
+
+def row_is_empty(row: dict):
+    # Loop through columns, checking for any non-empty strings
+    for column in row:
+        if row[column] != "":
+            return False
+
+    return True
+
+
+def index_data(dataset: list):
+    """
+    Sorts a dataset and adds observation numbers to unindexed rows
+    """
+
+    # Sort with a custom comparison function
+    dataset.sort(key=functools.cmp_to_key(compare_rows))
+
+    # Search through sorted data backwards to find the last observation number
+    last_observation_no_string = ""
+    last_observation_no_index = -1
+    for i in range(len(dataset) - 1, -1, -1):
+        if dataset[i][OBSERVATION_NUMBER] != "":
+            last_observation_no_string = dataset[i][OBSERVATION_NUMBER]
+            last_observation_no_index = i
+            break
+
+    # Store the index of the first new observation number (for printing labels later in the pipeline)
+    store_new_observation_index(last_observation_no_index + 1)
+
+    if last_observation_no_string != "" and last_observation_no_string.isnumeric():
+        # Convert the observation number to an integer and add one to get the next number
+        last_observation_no = int(last_observation_no_string)
+        next_observation_no = last_observation_no + 1
+    else:
+        # No previous observation number in the base data, so start at zero (plus the year prefix)
+        current_year = str(datetime.datetime.now().year)[2:]
+        next_observation_no = int(current_year + "00000")
+
+    # Add observation numbers sequentially
+    for i in range(last_observation_no_index + 1, len(dataset)):
+        if not row_is_empty(dataset[i]):
+            dataset[i][OBSERVATION_NUMBER] = str(next_observation_no)
+            next_observation_no += 1
 
     return dataset
 
@@ -368,10 +394,12 @@ def run(formatted_dict: dict):
 
     merged_data = merge_data(sources, dataset, formatted_dict)
 
-    write_dataset(merge_config, merged_data)
+    indexed_data = index_data(merged_data)
+
+    write_dataset(merge_config, indexed_data)
 
     print("Merging Data => Done\n")
 
     # TODO: logging
 
-    return merged_data
+    return indexed_data
