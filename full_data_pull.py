@@ -341,6 +341,7 @@ def run():
 
     print()
 
+    # Write the observations (with some reformatting) to a CSV in the data folder
     write_observations(observations_dict, sources, year)
 
     print()

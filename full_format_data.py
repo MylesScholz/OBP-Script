@@ -19,6 +19,7 @@ PLACES_FILE = "places.json"
 ELEVATION_DATA_FOLDER = "data/elevation/"
 
 # Column Name Constants
+YEAR = "Year 1"
 SAMPLE_ID_FIELD_NAME = "Sample ID."
 BEES_COLLECTED_FIELD_NAME = "Number of bees collected"
 
@@ -532,6 +533,44 @@ def format_data(sources: list, observations_dict: dict, output_header: list):
     return formatted_dict
 
 
+def write_formatted_data(sources: list, formatted_dict: dict):
+    # Get the current date for naming the output folder
+    current_date = datetime.datetime.now()
+    date_str = "{}_{}_{}".format(
+        current_date.month, current_date.day, str(current_date.year)[-2:]
+    )
+
+    for source in sources:
+        # Get the data for this source
+        source_data = formatted_dict[source["Abbreviation"]]
+
+        # Create the output file path for this source
+        folder_name = "./results/{}_{}/".format(source["Abbreviation"], date_str)
+
+        query_year = source_data[0][YEAR]
+        file_name = "{}_results_{}.csv".format(source["Abbreviation"], query_year)
+        file_path = os.path.relpath(folder_name + file_name)
+
+        print(
+            "    Writing '{}' observations to '{}'...".format(source["Name"], file_path)
+        )
+
+        # Check for results folder
+        if not os.path.isdir("./results"):
+            print("ERROR: Results folder must be present")
+            exit(1)
+
+        # Create folder if it doesn't exist
+        if not os.path.isdir(folder_name):
+            os.makedirs(folder_name)
+
+        source_header = source_data[0].keys()
+        with open(file_path, "w", newline="") as output_file:
+            csv_writer = csv.DictWriter(output_file, fieldnames=source_header)
+            csv_writer.writeheader()
+            csv_writer.writerows(source_data)
+
+
 def run(observations_dict: dict):
     print("Data Formatting")
 
@@ -543,6 +582,11 @@ def run(observations_dict: dict):
 
     # Create a re-formatted dictionary containing the data
     formatted_dict = format_data(sources, observations_dict, output_header)
+
+    print()
+
+    # Write the formatted data to a CSV file in the results folder
+    write_formatted_data(sources, formatted_dict)
 
     print("Data Formatting => Done\n")
 
