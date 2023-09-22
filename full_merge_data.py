@@ -315,7 +315,7 @@ def store_new_observation_index(index: int):
 
     # Write the updated dict to the configuration file
     labels_config_header = labels_config.keys()
-    with open(LABELS_CONFIG_FILE, newline="") as labels_config_file:
+    with open(LABELS_CONFIG_FILE, "w", newline="") as labels_config_file:
         csv_writer = csv.DictWriter(labels_config_file, fieldnames=labels_config_header)
         csv_writer.writeheader()
         csv_writer.writerow(labels_config)

@@ -363,12 +363,15 @@ def format_family(identifications):
 
 
 def format_scientific_name(taxon):
+    # Check that the taxon field exists
     if taxon is None:
         return ""
 
+    # Check that the taxon name field exists
     if taxon["name"] is None:
         return ""
 
+    # Return the taxon name
     return taxon["name"]
 
 
