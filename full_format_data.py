@@ -33,6 +33,7 @@ def get_sources():
 
 
 def read_header_format():
+    # Reader HEADER_FORMAT_FILE, which contains the header that formatted data should have
     with open(HEADER_FORMAT_FILE, newline="") as header_file:
         csv_reader = csv.reader(header_file, delimiter="\n")
         output_header = [line[0] for line in csv_reader]
@@ -41,13 +42,24 @@ def read_header_format():
 
 
 def format_str(field: str):
-    if field is None:
-        return ""
+    # Define empty string as default return value
+    field_str = ""
 
-    return str(field)
+    # Return empty str if field is undefined
+    if field is None:
+        return field_str
+
+    # Try to convert to str, return field_str regardless
+    try:
+        field_str = str(field)
+    except:
+        return field_str
+
+    return field_str
 
 
 def format_name(user_login: str, user_name: str):
+    # Define default values to be empty strings
     user_first_name = user_first_initial = user_last_name = ""
 
     # Check usernames.csv for manually entered name
@@ -102,9 +114,11 @@ def get_ofvs_value(name: str, ofvs: list):
 
 
 def format_month(decimal_month: str):
+    # Check that the given month value exists
     if decimal_month is None:
         return ""
 
+    # An ordered list of Roman numerals from 1-12
     month_numerals = [
         "I",
         "II",
@@ -120,19 +134,23 @@ def format_month(decimal_month: str):
         "XIII",
     ]
 
+    # Convert the given decimal month value to Roman numerals using the list
     return month_numerals[int(decimal_month) - 1]
 
 
 def format_time(observed_on):
+    # Check that the given observation timestamp exists and is the correct type
     if observed_on is None or type(observed_on) != datetime.datetime:
         return ""
 
+    # Get the hour and minute from the given value, format them as a time
     time = str(observed_on.hour) + observed_on.strftime(":%M")
 
     return time
 
 
 def read_places_file():
+    # Load the json PLACES_FILE into a Python object
     with open(PLACES_FILE, "r") as places_file:
         known_places = json.load(places_file)
 
@@ -140,9 +158,10 @@ def read_places_file():
 
 
 def look_up_place(place_ids: list):
+    # Set the default return values to be empty strings
     country = state = county = ""
 
-    # Look up place IDs in places.jscon
+    # Look up place IDs from PLACES_FILE
     known_places = read_places_file()
     for place_id in place_ids:
         if str(place_id) in known_places:
@@ -159,8 +178,10 @@ def look_up_place(place_ids: list):
 
 
 def format_country(country_name: str):
+    # Set the default country value to its unformatted value
     country_abbreviation = country_name
 
+    # Handle US and Canada
     if country_name == "United States":
         country_abbreviation = "USA"
     elif country_name == "Canada":
@@ -172,6 +193,7 @@ def format_country(country_name: str):
 
 
 def format_state(state_name: str):
+    # Check that given state name exists
     if state_name is None:
         return ""
 
@@ -229,8 +251,10 @@ def format_state(state_name: str):
         "Washington": "WA",
         "West Virginia": "WV",
         "Wisconsin": "WI",
+        # Insert other state/province abbreviations here
     }
 
+    # Look up the given state name in the abbreviations dictionary
     if state_name in state_abbreviations:
         abbreviation = state_abbreviations[state_name]
 
@@ -242,26 +266,33 @@ def format_location(place_guess):
     Parses a comma-separated place guess for a specific location name.
     Assumes the location name is the first item.
     """
+    # Check that given place name exists and is not blank
     if place_guess is None or place_guess == "":
         return ""
 
+    # Try splitting the place guess on spaced commas
     place_guess_split = place_guess.split(", ")
 
+    # If the split resulted in more than one item, it was successful
     if len(place_guess_split) > 1:
         return place_guess_split[0]
 
     return ""
 
 
-def format_coordinates(location):
+def format_coordinates(location: list):
+    # Check that the given location list exists
     if location is None:
         return "", ""
 
+    # Define the default coordinate values to be empty strings
     latitude = longitude = ""
 
+    # Format latitude to 4 decimal places if it is defined
     if location[0] is not None:
         latitude = "{:.4f}".format(float(location[0]))
 
+    # Format longitude to 4 decimal places if it is defined
     if location[1] is not None:
         longitude = "{:.4f}".format(float(location[1]))
 
@@ -269,6 +300,11 @@ def format_coordinates(location):
 
 
 def read_hgt(file_path: str, latitude: str, longitude: str):
+    """
+    Reads the special .hgt file format of the elevation data
+    Returns a numerical str of the elevation of the given coordinate
+    """
+
     with open(file_path, "rb") as file:
         latitude_decimal_part = float(latitude) - int(float(latitude))
         # Convert from decimal to arcseconds (each column is an arcsecond)
@@ -300,9 +336,6 @@ def format_elevation(latitude: str, longitude: str):
     /data/elevation_data/
 
     The data has 1 arcsecond (~30m) resolution
-
-    :param latitude: latitude to look up
-    :param longitude: longitude to look up
     """
 
     # Check that latitude and longitude are provided
@@ -345,6 +378,11 @@ def format_elevation(latitude: str, longitude: str):
 
 
 def format_family(identifications):
+    """
+    Searches the identifications of an observation for a taxonomic family
+    Uses the first identification with the rank of family
+    """
+    # Check that there are identifications to search
     if (
         identifications is None
         or len(identifications) < 1
@@ -352,6 +390,7 @@ def format_family(identifications):
     ):
         return ""
 
+    # Search the identifications list for a taxon with the rank of family
     for id in identifications:
         if id["taxon"]["rank"] == "family":
             return id["taxon"]["name"]
@@ -514,14 +553,18 @@ def format_data(sources: list, observations_dict: dict, output_header: list):
             for i in range(7):
                 formatted_observation[output_header[36 + i]] = ""
 
+            # Create entries for each bee collected (specimen IDs 1-# of bees)
             specimen_id = formatted_observation[output_header[12]]
             if specimen_id != "":
+                # Try to convert the specimen ID to an integer, simply append the formatted entry if this fails
                 try:
                     specimen_id = int(specimen_id)
                 except ValueError:
                     formatted_dict[source["Abbreviation"]].append(formatted_observation)
                 else:
-                    if specimen_id >= 1:
+                    # If there were multiple bees collected (specimen ID > 1), create entries for each bee
+                    if specimen_id > 1:
+                        # Duplicate the entry, except for the specimen ID, which will index the duplicates
                         for i in range(1, specimen_id + 1):
                             dup_observation = formatted_observation.copy()
                             dup_observation[output_header[12]] = str(i)

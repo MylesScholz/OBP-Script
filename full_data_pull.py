@@ -128,9 +128,11 @@ def format_time(time):
 
 
 def format_location(location: list):
+    # Check that location list exists
     if location is None:
         return "", ""
 
+    # Return location list with its items converted to strings
     return [format_str(location[0]), format_str(location[1])]
 
 

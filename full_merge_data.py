@@ -48,7 +48,7 @@ def get_sources():
 
 
 def get_merge_config():
-    # Read merge_config.csv to get the input and output file paths
+    # Read MERGE_CONFIG_FILE to get the input and output file paths
     with open(MERGE_CONFIG_FILE, newline="") as merge_config_file:
         merge_config = list(csv.DictReader(merge_config_file))[0]
 
@@ -386,16 +386,22 @@ def write_dataset(merge_config: dict, merged_dataset: list):
 def run(formatted_dict: dict):
     print("Merging Data")
 
+    # Read the source names and ids (iNaturalist projects)
     sources = get_sources()
 
+    # Read the input and output file paths from the merge config file
     merge_config = get_merge_config()
 
+    # Read the dataset from its file into memory
     dataset = read_dataset(merge_config)
 
+    # Merge the dataset with the given formatted data
     merged_data = merge_data(sources, dataset, formatted_dict)
 
+    # Sort and index the data, storing the row of the first new entry
     indexed_data = index_data(merged_data)
 
+    # Write the merged, sorted, and indexed data into a CSV file
     write_dataset(merge_config, indexed_data)
 
     print("Merging Data => Done\n")

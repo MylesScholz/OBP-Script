@@ -137,7 +137,7 @@ METHOD = "Collection method"
 
 
 def get_labels_config():
-    # Read labels_config.csv to get the output file path and starting observation number
+    # Read LABELS_CONFIG_FILE to get the output file path and starting and ending rows
     with open(LABELS_CONFIG_FILE, newline="") as labels_config_file:
         labels_config = list(csv.DictReader(labels_config_file))[0]
 
@@ -145,24 +145,30 @@ def get_labels_config():
 
 
 def validate_starting_row(starting_row_entry: str, maximum: int):
+    # Try to convert the starting row entry (from the config file) to an integer
     try:
         starting_row = int(starting_row_entry)
 
+        # Check the valid bounds for a starting row
         if starting_row < 0 or starting_row > maximum:
             starting_row = 0
     except:
+        # Return the first row index by default
         starting_row = 0
 
     return starting_row
 
 
 def validate_ending_row(ending_row_entry: str, default: int, starting_row: int):
+    # Try to convert the ending row entry (from the config file) to an integer
     try:
         ending_row = int(ending_row_entry)
 
+        # Check the valid bounds for an ending row
         if ending_row < starting_row:
             ending_row = default
     except:
+        # Return the given default value if unsuccessful
         ending_row = default
 
     return ending_row
