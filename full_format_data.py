@@ -13,7 +13,7 @@ from tqdm import tqdm
 SOURCES_FILE = "config/sources.csv"
 HEADER_FORMAT_FILE = "config/header_format.txt"
 USER_NAMES_FILE = "data/usernames.csv"
-PLACES_FILE = "places.json"
+PLACES_FILE = "data/places.json"
 
 # Folder Name Constant
 ELEVATION_DATA_FOLDER = "data/elevation/"
@@ -150,6 +150,10 @@ def format_time(observed_on):
 
 
 def read_places_file():
+    # Check that PLACES_FILE exists; otherwise return an empty dict
+    if not os.path.isfile(PLACES_FILE):
+        return {}
+
     # Load the json PLACES_FILE into a Python object
     with open(PLACES_FILE, "r") as places_file:
         known_places = json.load(places_file)

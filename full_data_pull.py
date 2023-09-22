@@ -12,7 +12,7 @@ from tqdm import tqdm
 
 # File Name Constants
 SOURCES_FILE = "config/sources.csv"
-PLACES_FILE = "places.json"
+PLACES_FILE = "data/places.json"
 
 # Column Name Constants
 SAMPLE_ID_FIELD_NAME = "Sample ID."
@@ -265,6 +265,10 @@ def write_observations(observations_dict: dict, sources: list, query_year: str):
 
 
 def read_places_file():
+    # Check that PLACES_FILE exists; otherwise return an empty dict
+    if not os.path.isfile(PLACES_FILE):
+        return {}
+
     # Open places.json and load it as a Python dictionary
     with open(PLACES_FILE, "r") as places_file:
         known_places = json.load(places_file)
