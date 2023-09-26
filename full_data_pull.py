@@ -332,7 +332,7 @@ def update_places(sources, observations_dict):
 
 
 def run():
-    print("Data Pulling")
+    print("Pulling Data...")
 
     # Get the year to query from the user
     year = get_year()
@@ -355,7 +355,7 @@ def run():
     # Update known places
     update_places(sources, observations_dict)
 
-    print("Data Pulling => Done\n")
+    print("Pulling Data => Done\n")
 
     # TODO: logging
 

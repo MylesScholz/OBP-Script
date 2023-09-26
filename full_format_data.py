@@ -16,7 +16,7 @@ USER_NAMES_FILE = "data/usernames.csv"
 PLACES_FILE = "data/places.json"
 
 # Folder Name Constant
-ELEVATION_DATA_FOLDER = "data/elevation/"
+ELEVATION_DATA_FOLDER = "data/elevation_data/"
 
 # Column Name Constants
 YEAR = "Year 1"
@@ -619,7 +619,7 @@ def write_formatted_data(sources: list, formatted_dict: dict):
 
 
 def run(observations_dict: dict):
-    print("Data Formatting")
+    print("Formatting Data...")
 
     # Read the source names and ids (iNaturalist projects)
     sources = get_sources()
@@ -635,7 +635,7 @@ def run(observations_dict: dict):
     # Write the formatted data to a CSV file in the results folder
     write_formatted_data(sources, formatted_dict)
 
-    print("Data Formatting => Done\n")
+    print("Formatting Data => Done\n")
 
     # TODO: logging
 

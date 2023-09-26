@@ -211,6 +211,9 @@ def add_data_matrix(figure, basis_x, basis_y, data):
     Generates and adds a rectangular (8 x 18) data matrix to the given figure
     """
 
+    if data is None or data == "":
+        return
+
     # Generate the data matrix using the Treepoem library (Python wrapper for BWIPP)
     image = tp.generate_barcode(
         barcode_type="datamatrixrectangular",
@@ -339,7 +342,7 @@ def write_pdf_page(pdf: PdfPages, data):
 
 
 def run(dataset: list):
-    print("Creating Labels")
+    print("Creating Labels...")
 
     # Read configuration file
     labels_config = get_labels_config()

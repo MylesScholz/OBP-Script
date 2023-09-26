@@ -65,6 +65,25 @@ def read_dataset(merge_config: dict):
     return dataset
 
 
+def row_is_empty(row: dict):
+    # Loop through columns, checking for any non-empty strings
+    for column in row:
+        if row[column] != "" and row[column] is not None:
+            return False
+
+    return True
+
+
+def remove_empty_rows(data: list):
+    pruned_data = []
+
+    for row in data:
+        if not row_is_empty(row):
+            pruned_data.append(row)
+
+    return pruned_data
+
+
 def str_to_int_catch(string: str):
     """
     Attempts to convert a string to an integer, catching errors if unsuccessful
@@ -321,15 +340,6 @@ def store_new_observation_index(index: int):
         csv_writer.writerow(labels_config)
 
 
-def row_is_empty(row: dict):
-    # Loop through columns, checking for any non-empty strings
-    for column in row:
-        if row[column] != "":
-            return False
-
-    return True
-
-
 def index_data(dataset: list):
     """
     Sorts a dataset and adds observation numbers to unindexed rows
@@ -384,7 +394,7 @@ def write_dataset(merge_config: dict, merged_dataset: list):
 
 
 def run(formatted_dict: dict):
-    print("Merging Data")
+    print("Merging Data...")
 
     # Read the source names and ids (iNaturalist projects)
     sources = get_sources()
@@ -395,8 +405,11 @@ def run(formatted_dict: dict):
     # Read the dataset from its file into memory
     dataset = read_dataset(merge_config)
 
+    # Remove empty rows, which could cause problems later, from the dataset
+    pruned_dataset = remove_empty_rows(dataset)
+
     # Merge the dataset with the given formatted data
-    merged_data = merge_data(sources, dataset, formatted_dict)
+    merged_data = merge_data(sources, pruned_dataset, formatted_dict)
 
     # Sort and index the data, storing the row of the first new entry
     indexed_data = index_data(merged_data)
