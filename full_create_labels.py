@@ -161,8 +161,110 @@ def validate_starting_row(starting_row_entry: str, maximum: int):
     return starting_row
 
 
-def confirm_row_range(init_starting_row: int, init_ending_row: int, maximum: int):
-    pass
+def get_starting_row(init_starting_row: int, data_length: int):
+    """
+    Gets a valid starting row from the user, defaulting to the one provided in the config file
+    """
+
+    # Notify the user of the default value
+    # Use 1-indexing when communicating with the user because it is more intuitive
+    print(
+        "    Enter a starting row (1-indexed, inclusive). Default value:",
+        init_starting_row + 1,
+        "(new entries).",
+    )
+
+    # Loop until a valid response is given
+    valid = False
+    while not valid:
+        # Prompt the user
+        starting_row_response = input("    Starting Row: ")
+
+        # Try to convert the user's response to an int
+        try:
+            starting_row_output = int(starting_row_response)
+
+            # Check the valid bounds
+            if starting_row_output > 0 and starting_row_output <= data_length:
+                # Escape the loop if within the bounds
+                valid = True
+            else:
+                print("    Invalid starting row.\n")
+        except:
+            # If unable to convert the users response to an int,
+            # check whether the response was empty
+            if starting_row_response == "":
+                # The user's response was empty, so use the default value
+                # and escape the loop
+                starting_row_output = init_starting_row + 1
+                valid = True
+            else:
+                print("    Invalid response.\n")
+
+    # Notify the user of the selected starting row
+    # This may not be obvious if they selected the default value
+    print("    Selected Starting Row: {}\n".format(starting_row_output))
+
+    # Return the selected value, converting back to 0-indexing
+    return starting_row_output - 1
+
+
+def get_ending_row(starting_row: int, data_length: int):
+    """
+    Gets a valid ending row from the user, defaulting to the last entry
+    """
+
+    # Notify the user of the default value
+    # Use 1-indexing when communicating with the user because it is more intuitive
+    # Use an inclusive range when communicating with the user because it is more intuitive
+    print(
+        "    Enter an ending row (1-indexed, inclusive). Default value:",
+        data_length,
+        "(last entry).",
+    )
+
+    # Loop until a valid response is given
+    valid = False
+    while not valid:
+        # Prompt the user
+        ending_row_response = input("    Ending Row: ")
+
+        # Try to convert the user's response to an int
+        try:
+            ending_row_output = int(ending_row_response)
+
+            # Check the valid bounds
+            if ending_row_output > starting_row and ending_row_output <= data_length:
+                # Escape the loop if within the bounds
+                valid = True
+            else:
+                print("    Invalid ending row.\n")
+        except:
+            # If unable to convert the users response to an int,
+            # check whether the response was empty
+            if ending_row_response == "":
+                # The user's response was empty, so use the default value
+                # and escape the loop
+                ending_row_output = data_length
+                valid = True
+            else:
+                print("    Invalid response.\n")
+
+    # Notify the user of the selected starting row
+    # This may not be obvious if they selected the default value
+    print("    Selected Ending Row: {}\n".format(ending_row_output))
+
+    # Return the selected value
+    return ending_row_output
+
+
+def confirm_row_range(init_starting_row: int, data_length: int):
+    # Get a starting and ending row from the user
+    starting_row = get_starting_row(init_starting_row, data_length)
+    ending_row = get_ending_row(starting_row, data_length)
+
+    # Return validated responses
+    return starting_row, ending_row
 
 
 def add_text_box(figure, basis_x, basis_y, text, box_type):
@@ -277,7 +379,7 @@ def write_pdf_page(pdf: PdfPages, data):
         # Text Box 1 (Location)
         # Different formats for the US and Canada
         if entry[COUNTRY] == "USA":
-            text_1 = "USA:{}:{}Co {} {} {} {}m".format(
+            text_1 = "USA:{}:{}Co {} {:.3f} {:.3f} {}m".format(
                 entry[STATE],
                 entry[COUNTY],
                 entry[PLACE],
@@ -286,14 +388,14 @@ def write_pdf_page(pdf: PdfPages, data):
                 entry[ELEVATION],
             )
         elif entry[COUNTRY] == "CAN":
-            text_1 = "CANADA:{} {} {} {} {}m".format(
+            text_1 = "CANADA:{} {} {:.3f} {:.3f} {}m".format(
                 entry[STATE],
                 entry[PLACE],
                 round(float(entry[LATITUDE]), 3),
                 round(float(entry[LONGITUDE]), 3),
                 entry[ELEVATION],
             )
-        # text_1 = tw.fill(text_1, 22, max_lines=3)
+        text_1 = tw.fill(text_1, 22)
 
         add_text_box(
             figure,
@@ -342,11 +444,9 @@ def run(dataset: list):
         starting_row = validate_starting_row(
             labels_config["Starting Row"], len(dataset)
         )
-        ending_row = len(dataset)
 
-        starting_row, ending_row = confirm_row_range(
-            starting_row, ending_row, len(dataset)
-        )
+        # Confirm the range of rows to create labels from
+        starting_row, ending_row = confirm_row_range(starting_row, len(dataset))
 
         # Truncate dataset to create labels only from the given starting row to the ending row
         dataset = dataset[starting_row:ending_row]
