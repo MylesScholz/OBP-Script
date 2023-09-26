@@ -57,11 +57,11 @@ def get_merge_config():
     return merge_config
 
 
-def read_dataset(merge_config: dict):
+def read_dataset(input_file_path: str):
     print("    Loading dataset...")
 
     # Read the dataset at "Input File Path" into memory
-    with open(merge_config["Input File Path"], newline="") as dataset_file:
+    with open(input_file_path, newline="") as dataset_file:
         dataset = list(csv.DictReader(dataset_file))
 
     return dataset
@@ -380,12 +380,11 @@ def index_data(dataset: list):
     return dataset
 
 
-def write_dataset(merge_config: dict, merged_dataset: list):
+def write_dataset(output_file_path: str, merged_dataset: list):
     """
     Writes a dataset to the Output File Path specified in merge_config as a CSV file
     """
 
-    output_file_path = os.path.relpath(merge_config["Output File Path"])
     print("    Writing merged data to '{}'...".format(output_file_path))
 
     dataset_header = merged_dataset[0].keys()
@@ -404,9 +403,11 @@ def run(formatted_dict: dict):
 
         # Read the input and output file paths from the merge config file
         merge_config = get_merge_config()
+        input_file_path = os.path.relpath(merge_config["Input File Path"])
+        output_file_path = os.path.relpath(merge_config["Output File Path"])
 
         # Read the dataset from its file into memory
-        dataset = read_dataset(merge_config)
+        dataset = read_dataset(input_file_path)
 
         # Remove empty rows, which could cause problems later, from the dataset
         pruned_dataset = remove_empty_rows(dataset)
@@ -418,7 +419,7 @@ def run(formatted_dict: dict):
         indexed_data = index_data(merged_data)
 
         # Write the merged, sorted, and indexed data into a CSV file
-        write_dataset(merge_config, indexed_data)
+        write_dataset(output_file_path, indexed_data)
 
         print("Merging Data => Done\n")
 
@@ -429,13 +430,13 @@ def run(formatted_dict: dict):
             log_file.write(
                 "{}: SUCCESS - Merged new data with '{}' into '{}'\n".format(
                     date_str,
-                    merge_config["Input File Path"],
-                    merge_config["Output File Path"],
+                    input_file_path,
+                    output_file_path,
                 )
             )
             log_file.write("\n")
 
-        return indexed_data
+        return output_file_path
 
     except Exception:
         # Log the error

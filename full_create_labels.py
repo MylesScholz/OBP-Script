@@ -161,19 +161,8 @@ def validate_starting_row(starting_row_entry: str, maximum: int):
     return starting_row
 
 
-def validate_ending_row(ending_row_entry: str, default: int, starting_row: int):
-    # Try to convert the ending row entry (from the config file) to an integer
-    try:
-        ending_row = int(ending_row_entry)
-
-        # Check the valid bounds for an ending row
-        if ending_row < starting_row:
-            ending_row = default
-    except:
-        # Return the given default value if unsuccessful
-        ending_row = default
-
-    return ending_row
+def confirm_row_range(init_starting_row: int, init_ending_row: int, maximum: int):
+    pass
 
 
 def add_text_box(figure, basis_x, basis_y, text, box_type):
@@ -353,8 +342,10 @@ def run(dataset: list):
         starting_row = validate_starting_row(
             labels_config["Starting Row"], len(dataset)
         )
-        ending_row = validate_ending_row(
-            labels_config["Ending Row"], len(dataset), starting_row
+        ending_row = len(dataset)
+
+        starting_row, ending_row = confirm_row_range(
+            starting_row, ending_row, len(dataset)
         )
 
         # Truncate dataset to create labels only from the given starting row to the ending row
