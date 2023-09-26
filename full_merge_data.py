@@ -5,6 +5,7 @@ import csv
 import datetime
 import functools
 import os
+import traceback
 
 from tqdm import tqdm
 
@@ -13,6 +14,7 @@ from tqdm import tqdm
 SOURCES_FILE = "config/sources.csv"
 MERGE_CONFIG_FILE = "config/merge_config.csv"
 LABELS_CONFIG_FILE = "config/labels_config.csv"
+LOG_FILE = "log_file.txt"
 
 # Column Name Constants
 
@@ -394,31 +396,54 @@ def write_dataset(merge_config: dict, merged_dataset: list):
 
 
 def run(formatted_dict: dict):
-    print("Merging Data...")
+    try:
+        print("Merging Data...")
 
-    # Read the source names and ids (iNaturalist projects)
-    sources = get_sources()
+        # Read the source names and ids (iNaturalist projects)
+        sources = get_sources()
 
-    # Read the input and output file paths from the merge config file
-    merge_config = get_merge_config()
+        # Read the input and output file paths from the merge config file
+        merge_config = get_merge_config()
 
-    # Read the dataset from its file into memory
-    dataset = read_dataset(merge_config)
+        # Read the dataset from its file into memory
+        dataset = read_dataset(merge_config)
 
-    # Remove empty rows, which could cause problems later, from the dataset
-    pruned_dataset = remove_empty_rows(dataset)
+        # Remove empty rows, which could cause problems later, from the dataset
+        pruned_dataset = remove_empty_rows(dataset)
 
-    # Merge the dataset with the given formatted data
-    merged_data = merge_data(sources, pruned_dataset, formatted_dict)
+        # Merge the dataset with the given formatted data
+        merged_data = merge_data(sources, pruned_dataset, formatted_dict)
 
-    # Sort and index the data, storing the row of the first new entry
-    indexed_data = index_data(merged_data)
+        # Sort and index the data, storing the row of the first new entry
+        indexed_data = index_data(merged_data)
 
-    # Write the merged, sorted, and indexed data into a CSV file
-    write_dataset(merge_config, indexed_data)
+        # Write the merged, sorted, and indexed data into a CSV file
+        write_dataset(merge_config, indexed_data)
 
-    print("Merging Data => Done\n")
+        print("Merging Data => Done\n")
 
-    # TODO: logging
+        # Log a success
+        current_date = datetime.datetime.now()
+        date_str = current_date.strftime("%Y-%m-%d %H:%M:%S")
+        with open(LOG_FILE, "a") as log_file:
+            log_file.write(
+                "{}: SUCCESS - Merged new data with '{}' into '{}'\n".format(
+                    date_str,
+                    merge_config["Input File Path"],
+                    merge_config["Output File Path"],
+                )
+            )
+            log_file.write("\n")
 
-    return indexed_data
+        return indexed_data
+
+    except Exception:
+        # Log the error
+        current_date = datetime.datetime.now()
+        date_str = current_date.strftime("%Y-%m-%d %H:%M:%S")
+        with open(LOG_FILE, "a") as log_file:
+            log_file.write("{}: ERROR while merging data:\n".format(date_str))
+            log_file.write(traceback.format_exc())
+            log_file.write("\n")
+
+        exit(1)

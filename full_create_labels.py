@@ -2,8 +2,9 @@
 # Created on September 15, 2023
 # Description: Module that creates bee specimen labels for new entries in the Oregon Bee Atlas database
 import csv
-import sys
+import datetime
 import os
+import traceback
 
 import textwrap as tw
 import matplotlib as mpl
@@ -18,6 +19,7 @@ from tqdm import tqdm
 
 # File Name Constants
 LABELS_CONFIG_FILE = "config/labels_config.csv"
+LOG_FILE = "log_file.txt"
 
 # PDF Layout Constants
 LETTER_WIDTH = 8.5
@@ -290,8 +292,8 @@ def write_pdf_page(pdf: PdfPages, data):
                 entry[STATE],
                 entry[COUNTY],
                 entry[PLACE],
-                entry[LATITUDE],
-                entry[LONGITUDE],
+                round(float(entry[LATITUDE]), 3),
+                round(float(entry[LONGITUDE]), 3),
                 entry[ELEVATION],
             )
         elif entry[COUNTRY] == "CAN":
@@ -302,7 +304,7 @@ def write_pdf_page(pdf: PdfPages, data):
                 round(float(entry[LONGITUDE]), 3),
                 entry[ELEVATION],
             )
-        text_1 = tw.fill(text_1, 22, max_lines=3)
+        # text_1 = tw.fill(text_1, 22, max_lines=3)
 
         add_text_box(
             figure,
@@ -342,44 +344,67 @@ def write_pdf_page(pdf: PdfPages, data):
 
 
 def run(dataset: list):
-    print("Creating Labels...")
+    try:
+        print("Creating Labels...")
 
-    # Read configuration file
-    labels_config = get_labels_config()
-    output_file_path = labels_config["Output File Path"]
-    starting_row = validate_starting_row(labels_config["Starting Row"], len(dataset))
-    ending_row = validate_ending_row(
-        labels_config["Ending Row"], len(dataset), starting_row
-    )
+        # Read configuration file
+        labels_config = get_labels_config()
+        output_file_path = os.path.relpath(labels_config["Output File Path"])
+        starting_row = validate_starting_row(
+            labels_config["Starting Row"], len(dataset)
+        )
+        ending_row = validate_ending_row(
+            labels_config["Ending Row"], len(dataset), starting_row
+        )
 
-    # Truncate dataset to create labels only from the given starting row to the ending row
-    dataset = dataset[starting_row:ending_row]
+        # Truncate dataset to create labels only from the given starting row to the ending row
+        dataset = dataset[starting_row:ending_row]
 
-    # Open a PDF file
-    with PdfPages(output_file_path) as pdf:
-        # Calculate partition values
-        part_size = N_ROWS * N_COLUMNS
-        n_parts = (len(dataset) // part_size) + 1
-        part_start = 0
-        part_end = part_size
-        page_i = 1
+        # Open a PDF file
+        with PdfPages(output_file_path) as pdf:
+            # Calculate partition values
+            part_size = N_ROWS * N_COLUMNS
+            n_parts = (len(dataset) // part_size) + 1
+            part_start = 0
+            part_end = part_size
+            page_i = 1
 
-        # Check that the partition end doesn't exceed the total length of the data
-        if part_end > len(dataset):
-            part_end = len(dataset)
-
-        # Loop through the data, writing one page per partition
-        while part_start < len(dataset):
-            print("    Page {}/{}".format(page_i, n_parts))
-            write_pdf_page(pdf, dataset[part_start:part_end])
-
-            # Increment the partition values
-            part_start = part_end
-            part_end += part_size
+            # Check that the partition end doesn't exceed the total length of the data
             if part_end > len(dataset):
                 part_end = len(dataset)
-            page_i += 1
 
-    print("Creating Labels => Done")
+            # Loop through the data, writing one page per partition
+            while part_start < len(dataset):
+                print("    Page {}/{}".format(page_i, n_parts))
+                write_pdf_page(pdf, dataset[part_start:part_end])
 
-    # TODO: logging
+                # Increment the partition values
+                part_start = part_end
+                part_end += part_size
+                if part_end > len(dataset):
+                    part_end = len(dataset)
+                page_i += 1
+
+        print("Creating Labels => Done")
+
+        # Log a success
+        current_date = datetime.datetime.now()
+        date_str = current_date.strftime("%Y-%m-%d %H:%M:%S")
+        with open(LOG_FILE, "a") as log_file:
+            log_file.write(
+                "{}: SUCCESS - Created labels at '{}' from new data\n".format(
+                    date_str, output_file_path
+                )
+            )
+            log_file.write("\n")
+
+    except Exception:
+        # Log the error
+        current_date = datetime.datetime.now()
+        date_str = current_date.strftime("%Y-%m-%d %H:%M:%S")
+        with open(LOG_FILE, "a") as log_file:
+            log_file.write("{}: ERROR while creating labels:\n".format(date_str))
+            log_file.write(traceback.format_exc())
+            log_file.write("\n")
+
+        exit(1)

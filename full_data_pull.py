@@ -13,6 +13,7 @@ from tqdm import tqdm
 # File Name Constants
 SOURCES_FILE = "config/sources.csv"
 PLACES_FILE = "data/places.json"
+LOG_FILE = "log_file.txt"
 
 # Column Name Constants
 SAMPLE_ID_FIELD_NAME = "Sample ID."
@@ -332,31 +333,52 @@ def update_places(sources, observations_dict):
 
 
 def run():
-    print("Pulling Data...")
+    try:
+        print("Pulling Data...")
 
-    # Get the year to query from the user
-    year = get_year()
+        # Get the year to query from the user
+        year = get_year()
 
-    # Read the source names and ids to pull from (iNaturalist projects)
-    sources = get_sources()
+        # Read the source names and ids to pull from (iNaturalist projects)
+        sources = get_sources()
 
-    print()
+        print()
 
-    # Query the iNaturalist API for observations for each project
-    observations_dict = pull_data(year, sources)
+        # Query the iNaturalist API for observations for each project
+        observations_dict = pull_data(year, sources)
 
-    print()
+        print()
 
-    # Write the observations (with some reformatting) to a CSV in the data folder
-    write_observations(observations_dict, sources, year)
+        # Write the observations (with some reformatting) to a CSV in the data folder
+        write_observations(observations_dict, sources, year)
 
-    print()
+        print()
 
-    # Update known places
-    update_places(sources, observations_dict)
+        # Update known places
+        update_places(sources, observations_dict)
 
-    print("Pulling Data => Done\n")
+        print("Pulling Data => Done\n")
 
-    # TODO: logging
+        # Log a success
+        current_date = datetime.datetime.now()
+        date_str = current_date.strftime("%Y-%m-%d %H:%M:%S")
+        with open(LOG_FILE, "a") as log_file:
+            log_file.write(
+                "{}: SUCCESS - Pulled {} data from sources:\n".format(date_str, year)
+            )
+            for source in sources:
+                log_file.write("    {}\n".format(source["Name"]))
+            log_file.write("\n")
 
-    return observations_dict
+        return observations_dict
+
+    except Exception:
+        # Log the error
+        current_date = datetime.datetime.now()
+        date_str = current_date.strftime("%Y-%m-%d %H:%M:%S")
+        with open(LOG_FILE, "a") as log_file:
+            log_file.write("{}: ERROR while pulling data:\n".format(date_str))
+            log_file.write(traceback.format_exc())
+            log_file.write("\n")
+
+        exit(1)

@@ -5,6 +5,7 @@ import csv
 import datetime
 import json
 import os
+import traceback
 
 from tqdm import tqdm
 
@@ -14,6 +15,7 @@ SOURCES_FILE = "config/sources.csv"
 HEADER_FORMAT_FILE = "config/header_format.txt"
 USER_NAMES_FILE = "data/usernames.csv"
 PLACES_FILE = "data/places.json"
+LOG_FILE = "log_file.txt"
 
 # Folder Name Constant
 ELEVATION_DATA_FOLDER = "data/elevation_data/"
@@ -619,24 +621,45 @@ def write_formatted_data(sources: list, formatted_dict: dict):
 
 
 def run(observations_dict: dict):
-    print("Formatting Data...")
+    try:
+        print("Formatting Data...")
 
-    # Read the source names and ids (iNaturalist projects)
-    sources = get_sources()
+        # Read the source names and ids (iNaturalist projects)
+        sources = get_sources()
 
-    # Read header from config/format_header.csv
-    output_header = read_header_format()
+        # Read header from config/format_header.csv
+        output_header = read_header_format()
 
-    # Create a re-formatted dictionary containing the data
-    formatted_dict = format_data(sources, observations_dict, output_header)
+        # Create a re-formatted dictionary containing the data
+        formatted_dict = format_data(sources, observations_dict, output_header)
 
-    print()
+        print()
 
-    # Write the formatted data to a CSV file in the results folder
-    write_formatted_data(sources, formatted_dict)
+        # Write the formatted data to a CSV file in the results folder
+        write_formatted_data(sources, formatted_dict)
 
-    print("Formatting Data => Done\n")
+        print("Formatting Data => Done\n")
 
-    # TODO: logging
+        # Log a success
+        current_date = datetime.datetime.now()
+        date_str = current_date.strftime("%Y-%m-%d %H:%M:%S")
+        with open(LOG_FILE, "a") as log_file:
+            log_file.write(
+                "{}: SUCCESS - Formatted data from sources:\n".format(date_str)
+            )
+            for source in sources:
+                log_file.write("    {}\n".format(source["Name"]))
+            log_file.write("\n")
 
-    return formatted_dict
+        return formatted_dict
+
+    except Exception:
+        # Log the error
+        current_date = datetime.datetime.now()
+        date_str = current_date.strftime("%Y-%m-%d %H:%M:%S")
+        with open(LOG_FILE, "a") as log_file:
+            log_file.write("{}: ERROR while formatting data:\n".format(date_str))
+            log_file.write(traceback.format_exc())
+            log_file.write("\n")
+
+        exit(1)
