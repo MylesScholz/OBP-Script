@@ -77,8 +77,10 @@ def row_is_empty(row: dict):
 
 
 def remove_empty_rows(data: list):
+    # Define a new list to hold non-empty data
     pruned_data = []
 
+    # Loop through the data only adding non-empty data to pruned_data
     for row in data:
         if not row_is_empty(row):
             pruned_data.append(row)

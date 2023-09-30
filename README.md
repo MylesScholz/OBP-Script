@@ -1,14 +1,18 @@
-# Oregon Bee Project Data Retrieval and Formatting Script
+# Oregon Bee Project Data Pipeline Script
 
 ## **Summary**
-These scripts retrieve observation data from iNaturalist.org and reformat it for printing bee specimen labels.
+These scripts retrieve observation records from iNaturalist.org, reformat them, and create bee specimen labels from them.
 
-There are three main processes:
-1. Pulling and formatting data from iNaturalist.org
-2. Merging and indexing formatted data
-3. Making sheets of labels from formatted data
+There are two ways to run the scripts:
+1. **Full Pipeline Mode** - the program runs the full process sequentially:
+   1. Pulling data from iNaturalist.org
+   2. Formatting the data
+   3. Merging the data with an existing dataset and indexing it
+   4. Creating labels from the data (optional)
+2. **Labels Only Mode** - the program creates labels from a given formatted dataset
+   * This option exists because creating labels is time-consuming, so the user may wish to run it as a separate process.
 
-These processes can be run by executing (double-clicking) iNaturalist_Process.bat, Merge_Process.bat, or Labels_Process.bat, respectively.
+These processes can be run by executing (double-clicking) Full_Process.bat or Labels_Process.bat, respectively. See the corresponding sections below for details.
 
 ## **Installation**
 These scripts depend on a several pieces of third-party software to function. For developers' convenience, there is a list in OBP-Script/config/dependencies.txt. This section will provide instructions on how to install each in order on a Windows computer.
@@ -44,54 +48,90 @@ Finally, some of the Python libraries (treepoem and ghostscript) require a versi
 After completing the above steps, the scripts should be able to run on the computer.
 
 
-## **Pulling and Formatting Data from iNaturalist.org**
-This script (iNaturalist_Process.bat) will query iNaturalist.org for observation data from a given year and from a given list of iNaturalist projects. When a user runs the script, they will be prompted to type a year to query. The list of iNaturalist projects to query is stored in OBP-Script/config/sources.txt (see "Changing Sources" below).
+## **Full Pipeline Mode**
+This script (Full_Process.bat) executes the full data pipeline in four steps:
+   1. Pulling data
+   2. Formatting data
+   3. Merging data
+   4. Creating labels
 
-As of July 2023, the script pulls from the following projects:
+The first three steps always run in Full Pipeline Mode and cannot be paused. The user has the option to run the fourth (label creation) step or end the process after the first three steps. No information will be lost if the user ends the process before creating labels.
+
+
+### **Running the Process**
+0. Check that the script is configured properly. Each step has a configuration file in OBP-Script/config/. See the respective section below for details on how to configure them.
+1. Execute (double-click) Full_Process.bat.
+2. A terminal will open and the program will run. When prompted, enter the requested information. See each step's section below for details on answering the prompts.
+3. The locations of the output files for each step are detailed in the corresponding section below.
+
+
+### **Step 1: Pulling Data**
+The pipeline begins by querying iNaturalist.org for observation data from a given year and from a given list of iNaturalist projects. When a user runs the script, they will be prompted to type a year to query. The list of iNaturalist projects to query is stored in OBP-Script/config/sources.csv (see "Data Pulling Configuration" below).
+
+As of September 2023, the script pulls from the following projects:
 * Oregon Bee Atlas (OBA)
 * Master Melittologist (MM)
 * Washington Bee Atlas (WaBA)
 
-### **Running the Process**
-0. Check that the script is set to pull data from the desired projects (OBP-Script/config/sources.txt).
-   * If not, see "Changing Sources" below.
-1. Execute (double-click) iNaturalist_Process.bat.
-2. A terminal will open. When prompted, type a year to query and press Enter.
-3. Wait while the program fetches the data (this may take several minutes). The program will pull and format each source's data sequentially.
-4. The resulting formatted CSV files will appear in source-specific folders under OBP-Script/results/.
+### Data Pulling Configuration 
 
-   Each source-specific folder will be named according to the format Abbr_M_D_YY, where Abbr is an abbreviation of the source and M_D_YY is the date when the program ran. For example, the results of fetching data from the Oregon Bee Atlas on July 3rd, 2023 would appear in OBP-Script/results/OBA_7_3_23/.
-
-   The resulting CSV file will be named according to the format Abbr_results_YYYY.csv, where Abbr is an abbreviation of the source and YYYY is the year that was queried. For example, querying Oregon Bee Atlas data from 2022 would produce a file named OBA_results_2022.csv.
-
-   If the program is run a second time on the same day, the results file will be entirely overwritten with new data.
-
-### **Changing Sources**
-The script pulls data from a list of iNaturalist projects in OBP-Script/config/sources.txt. This file has a specific format that must be maintained for the script to run properly. Each source has its own line, and each line has two comma-separated fields: the name of the source and the iNaturalist project ID. The source name is not essential for the script to function; it is only used for improving the readability of the program's output. The iNaturalist project ID is essential for pulling data from the correct sources.
+The script pulls data from a list of iNaturalist projects specified in OBP-Script/config/sources.csv. The file is in a CSV format with three columns. They are, in order:
+   1. Name: the name of the source as it will appear in the terminal
+   2. ID: the iNaturalist project ID; this is essential for pulling data from the correct sources.
+   3. Abbreviation: the abbreviation of the source's name; this must be unique.
 
 To add a source, do the following:
-1. Open OBP-Script/config/sources.txt.
-2. Add a line at the end of the file.
-3. Type a name for the source.  
-   * The name cannot contain commas, but all other keyboard characters are allowed.
-   * New sources will not have an abbreviation unless the code is modified. Output files and folders will use the project ID instead.
-4. Type a comma and then the iNaturalist project ID.  
-   The iNaturalist project ID can be found by doing the following:
+1. Open OBP-Script/config/sources.csv in a text editor or Excel.
+2. Add a line at the end of the file, or select the next blank cell in the A column if using Excel.
+3. Type a name for the source. The name cannot contain commas, but all other keyboard characters are allowed.
+1. Type a comma (or move to B column), and then type the iNaturalist project ID. The iNaturalist project ID can be found by doing the following:
    1. In a browser, go to https://www.inaturalist.org/observations/identify.
    2. Click the "Filters" button.
    3. Click the "More Filters" button.
    4. Type the name of the project in the "Project" field.
-      * Be sure to select the project from the results. The full project name should appear in green.
+      * Be sure to select the project from the results drop-down menu. The full project name should appear in green.
    5. The project ID will appear as a string of about five numbers at the end of the browser's URL bar.
-5. Save and close sources.txt.
+2. Type a comma (or move to the C column), and then type a unique abbreviation for the source.
+3. Save and close sources.csv.
 
 To remove a source, do the following:
-1. Open OBP-Script/config/sources.txt.
-2. Select and delete the line containing the source to be removed.
-   * Do not leave the line empty. Press backspace on the empty line to remove it.
-3. Save and close sources.txt.
+1. Open OBP-Script/config/sources.csv in a text editor or Excel.
+2. Select and delete the line (or row) containing the source to be removed.
+3. Save and close sources.csv.
 
-## **Merging and Indexing Formatted Data**
+### Data Pulling Prompts
+At the beginning of this step, the program will prompt the user for a year with which to query iNaturalist.org. It accepts four-digit years less than or equal to the current year. Type a number of this format and hit Enter to continue. There are no other prompts in this step.
+
+### Data Pulling Output
+The data pulling step outputs a minimally formatted CSV file in a source-specific folder under OBP-Script/data/.
+
+Each source-specific folder will be named according to the format Abbr_M_D_YY, where Abbr is an abbreviation of the source and M_D_YY is the date when the program ran. For example, the results of fetching data from the Oregon Bee Atlas on July 3rd, 2023 would appear in OBP-Script/data/OBA_7_3_23/.
+
+The resulting CSV file will be named according to the format observations_YYYY.csv, where YYYY is the year that was queried. For example, querying Oregon Bee Atlas data from 2022 would produce a file named observations_2022.csv.
+
+If the program is run a second time on the same day with the same query year, the output file will be entirely overwritten with new data.
+
+
+### **Step 2: Formatting Data**
+The second step of the pipeline is to format the data that was pulled from iNaturalist.org previously. This step is entirely fixed without modifying the code, so it does not need user input or configuration. Nonetheless, this step's configuration file, header_format.txt, is explained below.
+
+### Data Formatting Configuration
+The program formats the data into a CSV file with column names specified in OBP-Script/config/header_format.txt. The name of each column appears in order on each line of the file. For the merging step to work, these column names must match those of the input dataset for that step exactly.
+
+### Data Formatting Prompts
+There are no user prompts for this step.
+
+### Data Formatting Output
+The data formatting step outputs a CSV file in a source-specific folder under OBP-Script/results/.
+
+Each source-specific folder will be named according to the format Abbr_M_D_YY, where Abbr is an abbreviation of the source and M_D_YY is the date when the program ran. For example, the results of formatting data from the Oregon Bee Atlas on July 3rd, 2023 would appear in OBP-Script/results/OBA_7_3_23/.
+
+The resulting CSV file will be named according to the format Abbr_results_YYYY.csv, where Abbr is an abbreviation of the source and YYYY is the year that was queried. For example, formatting Oregon Bee Atlas data from 2022 would produce a file named OBA_results_2022.csv.
+
+If the program is run a second time on the same day with the same query year, the output file will be entirely overwritten with new data.
+
+
+### **Merging and Indexing Formatted Data**
 This script (Merge_Process.bat) will combine, sort, and index two formatted data files, such as the "results" files that are output from the data pulling process. When the user runs the script, they will be prompted for three file paths: the base file, the file to append to the base file, and the output file. These files must be CSV files and must have the exact header specified in OBP-Script/config/format_header.txt (see "Help and Tips" below).
 
 ### **Running the Process**
