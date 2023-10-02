@@ -146,7 +146,7 @@ To set the input and output file paths, do the following:
 5. Type the new value for the Output File Path.
 6. Save and close merge_config.csv.
 
-See "Help and Tips" for information about file paths.
+See "Help and Tips - File Paths" for information about file paths.
 
 ### Data Merging Prompts
 There are no user prompts for this step.
@@ -174,16 +174,38 @@ in ascending order, with blank values being put at the end. If all "Observation 
 
 
 ### Step 4: Creating Labels from Formatted Data
-This step will create a PDF of labels with formatted data from the previous steps or from a CSV file, depending on how this process was executed. If this step is reached in Full Pipeline Mode, the user will have the opportunity to check the data before it begins creating labels. If this step is reached in Labels Only Mode, the user will need to provide a file path of a formatted CSV dataset as input. See "Label Creation Prompts" below for details.
+This step will create a PDF of labels with formatted data from the previous steps or from a CSV file, depending on how it was executed. If this step is reached in Full Pipeline Mode, the user will have the opportunity to check the data before the program begins creating labels. If this step is reached in Labels Only Mode, the user will need to provide a file path of a formatted CSV dataset as input. See "Label Creation Prompts" below for details.
 
 ### Label Creation Configuration
+The label creation step will output the labels to a PDF file path specified in OBP-Script/config/labels_config.csv. The configuration file also specifies the default row number in the input dataset from which to create labels. This value is set by the merging process and is optional (see "Label Creation Prompts" below), so editing it is not recommended.
+1. Output File Path: a relative or absolute file path where the labels will be output. This must be a PDF file.
+2. Starting Row: the zero-indexed row number of the input dataset from which to create labels. It is not recommended for the user to change this manually.
 
+To set the Output File Path, do the following:
+1. Open OBP-Script/config/labels_config.csv in a text editor or Excel.
+2. On the first line after the column names, select the value before the first comma (cell A2 in Excel).
+3. Type the new value for the Output File Path.
+4. Save and close labels_config.csv.
 
 ### Label Creation Prompts
+The prompts for the label creation step begin differently, depending on whether the program is in Full Pipeline Mode or Labels Only Mode.
 
+In Full Pipeline Mode, after the merging step is complete, the user will be prompted to check the dataset and respond affirmatively to proceed with label creation. It is recommended to look over the data in the output file of the merging step (located at the Output File Path in OBP-Script/config/merge_config.csv). When ready, type Y or y and Enter to continue. If the user wishes to end the program, they may type any other character (or no characters) and Enter to do so.
+
+In Labels Only Mode, when the user runs the script, they will be prompted to enter a file path for an input dataset. The file path may be relative or absolute and may be wrapped in quotation marks (see "Help and Tips - File Paths" below). The input dataset should be a formatted CSV file with the exact header specified in OBP-Script/config/header_format.txt.
+
+After the above prompts, Full Pipeline Mode and Labels Only Mode have the same prompts.
+
+The program will next prompt the user for a starting row. This is an integer value representing the first row of the input dataset from which labels will be made. This allows the labels to be made from only part of the input dataset to avoid redundancy and save time. The user may type a number between 0 and the total length of the dataset and press Enter to specify a starting row.
+
+If the user presses Enter without typing a number, the default value will be used. The default value for the starting row is the first new row. It is set by the data merging step and stored in OBP-Script/config/labels_config.csv, so in Labels Only Mode, it may not actually represent new data.
+
+Lastly, the program will prompt the user for an ending row. This is an integer value that represents the last row of the input dataset from which labels will be made. The user may type a number between the starting row and the total length of the dataset and press Enter to specify an ending row.
+
+If the user presses Enter without typing a number, the default value will be used. The default value for the ending row is the last row of the input dataset.
 
 ### Label Creation Output
-The resulting PDF will include one label for each entry of the input data. The pages have the following layout:
+The label creation step produces a PDF file at the file path specified in its configuration. The resulting PDF will include one label for each entry of the input data within the given starting and ending row range. The pages have the following layout:
 
 US Letter size paper (8.5" x 11")  
 Portrait orientation  
