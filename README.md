@@ -65,7 +65,7 @@ The first three steps always run in Full Pipeline Mode and cannot be paused. The
 3. The locations of the output files for each step are detailed in the corresponding section below.
 
 
-### **Step 1: Pulling Data**
+### **Step 1: Pulling Data from iNaturalist.org**
 The pipeline begins by querying iNaturalist.org for observation data from a given year and from a given list of iNaturalist projects. When a user runs the script, they will be prompted to type a year to query. The list of iNaturalist projects to query is stored in OBP-Script/config/sources.csv (see "Data Pulling Configuration" below).
 
 As of September 2023, the script pulls from the following projects:
@@ -74,9 +74,8 @@ As of September 2023, the script pulls from the following projects:
 * Washington Bee Atlas (WaBA)
 
 ### Data Pulling Configuration 
-
 The script pulls data from a list of iNaturalist projects specified in OBP-Script/config/sources.csv. The file is in a CSV format with three columns. They are, in order:
-   1. Name: the name of the source as it will appear in the terminal
+   1. Name: the name of the source as it will appear in the terminal.
    2. ID: the iNaturalist project ID; this is essential for pulling data from the correct sources.
    3. Abbreviation: the abbreviation of the source's name; this must be unique.
 
@@ -131,39 +130,74 @@ The resulting CSV file will be named according to the format Abbr_results_YYYY.c
 If the program is run a second time on the same day with the same query year, the output file will be entirely overwritten with new data.
 
 
-### **Merging and Indexing Formatted Data**
-This script (Merge_Process.bat) will combine, sort, and index two formatted data files, such as the "results" files that are output from the data pulling process. When the user runs the script, they will be prompted for three file paths: the base file, the file to append to the base file, and the output file. These files must be CSV files and must have the exact header specified in OBP-Script/config/format_header.txt (see "Help and Tips" below).
+### **Step 3: Merging and Indexing Formatted Data**
+In this step, the program will combine formatted data from the previous step with an existing dataset of the same format. It will detect duplicate entries and sort and index the output dataset. The input and output file paths for this step are defined in OBP-Script/config/merge_config.csv (see "Data Merging Configuration" below). These files must be CSV files, and the input file must have the exact header specified in OBP-Script/config/header_format.txt.
 
-### **Running the Process**
-1. Execute (double-click) Merge_Process.bat.
-2. When prompted, type or paste the file path of the base file.
-   * The program automatically trims quotation marks from the ends of the file path, so users may paste file paths copied directly from the File Explorer on Windows (see "Help and Tips" below).
-3. When prompted, type or paste the file path of the file to append to the base file.
-   * The program automatically trims quotation marks from the ends of the file path, so users may paste file paths copied directly from the File Explorer on Windows (see "Help and Tips" below).
-4. When prompted, type or paste a file path to output the merged data to.  
+### Data Merging Configuration
+The input and output file paths for the data merging step are specified in OBP-Script/config/merge_config.csv. This file is in a CSV format with two columns:
+1. Input File Path: the relative or absolute file path of a formatted dataset to merge new data into. This must be a CSV file and must have the exact column names listed in OBP-Script/config/header_format.txt.
+2. Output File Path: a relative or absolute file path where the resulting merged dataset will be saved. This must be a CSV file and can be the same as the Input File Path, but the original dataset will be overwritten.
 
-   This may be a new file or an existing file but be careful because the program will overwrite all data in the target file.
+To set the input and output file paths, do the following:
+1. Open OBP-Script/config/merge_config.csv in a text editor or Excel.
+2. On the first line below the column names, select the value before the first comma (cell A2 in Excel).
+3. Type the new value for the Input File Path.
+4. On the same line, select the value after the first comma (cell B2).
+5. Type the new value for the Output File Path.
+6. Save and close merge_config.csv.
 
-5. Wait while the program merges the data (this may take a minute, depending on the size of the input files).
-6. The resulting merged data will appear in the specified output file path.  
+See "Help and Tips" for information about file paths.
 
-   The script checks for duplicate entries by comparing each entry in the appending data to each entry in the base data. If an entry in the appending data matches in any of the following ways (checked in order), it will not be added to the merged file.
-   1. Observation No.: If the "Observation No." values are not empty, two entries match if their "Observation No." fields match.
-   2. URL, Sample ID, and Specimen ID: If the "Associated plant - Inaturalist URL" values are not empty, two entries match if their "Associated plant - Inaturalist URL", "Sample ID", and "Specimen ID" fields all match.
-   3. Alias, Date, Sample ID, and Specimen ID: In all other cases, two entries match if their "iNaturalist Alias", "Collection Day 1", "Month 1", "Year 1", "Sample ID", and "Specimen ID" fields all match.
+### Data Merging Prompts
+There are no user prompts for this step.
 
-   Entries with empty "Dec. Lat." or "Dec. Long." fields will also not be added to the merged file.
+### Data Merging Output
+The data merging step outputs the resulting merged dataset to the file path specified in its configuration. The program checks the data for duplicate entries and adds indices to new data.
 
-   The script will index (assign a unique number to) the data in the "Observation No." field using the format YY#####, where YY is the two-digit abbreviation of the year when the script ran and ##### are five sequentially assigned digits. The script assigns these numbers by sorting the data by
-   1. "Observation No."
-   2. Then by, "Collector - Last Name"
-   3. Then by, "Collector - First Name"
-   4. Then by, "Month 1"
-   5. Then by, "Collection Day 1"
-   6. Then by, "Sample ID"
-   7. Then by, "Specimen ID"  
-   
-   in ascending order, with blank values being put at the end. If all "Observation No." fields are blank in the merged data, the indexing will start at YY00000. Otherwise, the indexing will start at the previous largest "Observation No." plus one.
+It checks for duplicate entries by comparing each entry in the appending data to each entry in the base dataset. If an entry in the appending data matches in any of the following ways (checked in order), it will not be added to the merged file.
+1. Observation No.: If the "Observation No." values are not empty, two entries match if their "Observation No." fields match.
+2. URL, Sample ID, and Specimen ID: If the "Associated plant - Inaturalist URL" values are not empty, two entries match if their "Associated plant - Inaturalist URL", "Sample ID", and "Specimen ID" fields all match.
+3. Alias, Date, Sample ID, and Specimen ID: In all other cases, two entries match if their "iNaturalist Alias", "Collection Day 1", "Month 1", "Year 1", "Sample ID", and "Specimen ID" fields all match.
+
+Entries with empty "Dec. Lat." or "Dec. Long." fields will also not be added to the merged file.
+
+The program will index (assign a unique number to) the data in the "Observation No." field using the format YY#####, where YY is the two-digit abbreviation of the year when the script ran and ##### are five sequentially assigned digits. The script assigns these numbers by sorting the data by
+4. "Observation No."
+5. Then by, "Collector - Last Name"
+6. Then by, "Collector - First Name"
+7. Then by, "Month 1"
+8. Then by, "Collection Day 1"
+9. Then by, "Sample ID"
+10. Then by, "Specimen ID"  
+
+in ascending order, with blank values being put at the end. If all "Observation No." fields are blank in the merged data, the indexing will start at YY00000. Otherwise, the indexing will start at the previous largest "Observation No." plus one.
+
+
+### Step 4: Creating Labels from Formatted Data
+This step will create a PDF of labels with formatted data from the previous steps or from a CSV file, depending on how this process was executed. If this step is reached in Full Pipeline Mode, the user will have the opportunity to check the data before it begins creating labels. If this step is reached in Labels Only Mode, the user will need to provide a file path of a formatted CSV dataset as input. See "Label Creation Prompts" below for details.
+
+### Label Creation Configuration
+
+
+### Label Creation Prompts
+
+
+### Label Creation Output
+The resulting PDF will include one label for each entry of the input data. The pages have the following layout:
+
+US Letter size paper (8.5" x 11")  
+Portrait orientation  
+0.25" horizontal margins  
+0.5" vertical margins  
+
+25 rows of labels  
+10 columns of labels  
+Equal horizontal and vertical spacing  
+0.666" label width  
+0.311" label height  
+
+All layout values are defined as constants in the first lines of full_create_labels.py.
+
 
 ### **Help and Tips**
 * **File Paths**  
@@ -187,65 +221,3 @@ This script (Merge_Process.bat) will combine, sort, and index two formatted data
    5. When prompted for a file path, right click, or press Ctrl + V, to paste the folder path.  
    6. Type slash and the target file's name and extension.
    7. Press Enter to submit the file path.
-
-* **Resolving Non-matching Header Errors (format_header.txt)**  
-   The "base and append file headers do not match" error is easy to trigger with this script because the program requires that the headers of its input files match *exactly*. Resolving this issue depends on which files are being used as input and whether their headers can be modified.
-   
-   If this error occurs when merging with "results" files from the data pulling and formatting process, the fix may be relatively simple. The "results" files use the header specified in OBP-Script/config/format_header.txt. This file lists the column names for the data, one on each line. To resolve the issue,
-   1. Check whether the number of columns and the names of the columns match between format_header.txt and the other input file.
-   2. If the headers have the same number of columns and the columns roughly correspond but they do not match in spelling, capitalization, or spacing,  
-      1. Modify the column names in either format_header.txt or the other input file so the two match exactly.
-      2. If format_header.txt was changed, save it, and run the data pulling and formatting process again.
-      3. Run the merging process again (with the newly pulled data, if applicable).
-   3. If the number of columns does not match or the columns do not correspond in order, there are a couple options:
-      * Manually modify the columns of either input file to match exactly. If reordering or renaming the columns, make sure that the data is reordered or rewritten in the same way.
-      * Modify the code (format_data.py) to change how data is formatted. Run the data pulling and formatting process again.
-      * After either, run the merging process again with the reformatted data.
-
-## **Making Sheets of Labels from Formatted Data**
-This script (Labels_Process.bat) will create a PDF of labels with data from a formatted CSV file. When the user runs the script, they will be prompted for an input file path and an output file path. The input file path is required and must be a CSV file with a specific header (see "Input File Specifications" below). The output file is also required and must be a PDF file.
-
-### **Running the Process**
-1. Execute (double-click) Labels_Process.bat.
-2. When prompted, type or paste the file path of the input CSV file.
-   * The program automatically trims quotation marks from the ends of the file path, so users may paste file paths copied directly from the File Explorer on Windows (see "Help and Tips" above).
-3. When prompted, type or paste the file path of the output PDF file.
-   * The program automatically trims quotation marks from the ends of the file path, so users may paste file paths copied directly from the File Explorer on Windows (see "Help and Tips" above).
-4. Wait while the program creates the labels sheets. This may take several minutes, depending on the amount of input data.
-5. The resulting PDF will appear at the specified output file path.
-
-### **Input File Specifications**
-This script expects that the input CSV file has certain column names, which must match the following list *exactly*, excluding the quotation marks. The column names are defined by constants in the first lines of make_labels.py.
-
-* "Country"
-* "State"
-* "County"
-* "Abbreviated Location"
-* "Dec. Lat."
-* "Dec. Long."
-* "Elevation"
-* "Collection Day 1"
-* "Month 1"
-* "Year 1"
-* "Sample ID"
-* "Specimen ID"
-* "Collector - First Initial"
-* "Collector - Last Name"
-* "Collection method"
-* "Observation No."
-
-### **Output File Specifications**
-The resulting PDF will include one label for each entry of the input data. The pages have the following layout:
-
-US Letter size paper (8.5" x 11")  
-Portrait orientation  
-0.25" horizontal margins  
-0.5" vertical margins  
-
-25 rows of labels  
-10 columns of labels  
-Equal horizontal and vertical spacing  
-0.666" label width  
-0.311" label height  
-
-All layout values are defined as constants in the first lines of make_labels.py.
