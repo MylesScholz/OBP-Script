@@ -5,3 +5,6 @@ elevations
 results
 .vscode
 test*
+*.pkl
+*.pdf
+archive

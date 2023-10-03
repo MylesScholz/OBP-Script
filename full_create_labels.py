@@ -1,10 +1,11 @@
 # Author: Myles Scholz
-# Created on July 7, 2023
-# Description: Takes formatted bee observation data and creates sheets of specimen labels
-
-import sys
-import os
+# Created on September 15, 2023
+# Description: Module that creates bee specimen labels for new entries in the Oregon Bee Atlas database
 import csv
+import datetime
+import os
+import traceback
+
 import textwrap as tw
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -15,6 +16,10 @@ import treepoem as tp
 import numpy as np
 from tqdm import tqdm
 
+
+# File Name Constants
+LABELS_CONFIG_FILE = "config/labels_config.csv"
+LOG_FILE = "log_file.txt"
 
 # PDF Layout Constants
 LETTER_WIDTH = 8.5
@@ -106,6 +111,20 @@ DATA_MATRIX = {
 
 # Column Name Constants
 
+# Observation Number
+OBSERVATION_NUMBER = "Observation No."
+
+# Collector
+FIRST_INITIAL = "Collector - First Initial"
+LAST_NAME = "Collector - Last Name"
+
+# IDs and Date
+SAMPLE_ID = "Sample ID"
+SPECIMEN_ID = "Specimen ID"
+DAY = "Collection Day 1"
+MONTH = "Month 1"
+YEAR = "Year 1"
+
 # Location
 COUNTRY = "Country"
 STATE = "State"
@@ -115,78 +134,137 @@ LATITUDE = "Dec. Lat."
 LONGITUDE = "Dec. Long."
 ELEVATION = "Elevation"
 
-# Date and IDs
-DAY = "Collection Day 1"
-MONTH = "Month 1"
-YEAR = "Year 1"
-SAMPLE_ID = "Sample ID"
-SPECIMEN_ID = "Specimen ID"
-
-# Collector and Method
-FIRST_INITIAL = "Collector - First Initial"
-LAST_NAME = "Collector - Last Name"
+# Collection Method
 METHOD = "Collection method"
 
-# Observation Number
-OBSERVATION_NUMBER = "Observation No."
+
+def get_labels_config():
+    # Read LABELS_CONFIG_FILE to get the output file path and starting and ending rows
+    with open(LABELS_CONFIG_FILE, newline="") as labels_config_file:
+        labels_config = list(csv.DictReader(labels_config_file))[0]
+
+    return labels_config
 
 
-def validate_file_paths(input_file_path: str, output_file_path: str):
+def validate_starting_row(starting_row_entry: str, maximum: int):
+    # Try to convert the starting row entry (from the config file) to an integer
+    try:
+        starting_row = int(starting_row_entry)
+
+        # Check the valid bounds for a starting row
+        if starting_row < 0 or starting_row > maximum:
+            starting_row = 0
+    except:
+        # Return the first row index by default
+        starting_row = 0
+
+    return starting_row
+
+
+def get_starting_row(init_starting_row: int, data_length: int):
     """
-    Ensures provided input and output file paths are valid
-    """
-
-    # If the output file path is unset, name it after the input file
-    if output_file_path == "":
-        input_file_directory, input_file = os.path.split(input_file_path)
-        input_file_name, input_file_extension = os.path.splitext(input_file)
-        output_file_path = input_file_name + ".pdf"
-
-    # Check that input file path is a CSV file
-    if not input_file_path.lower().endswith(".csv"):
-        print("ERROR: input file must be in .csv format")
-        exit(1)
-
-    # Check that output file path is a PDF file
-    if not output_file_path.lower().endswith(".pdf"):
-        print("ERROR: output file must be in .pdf format")
-        exit(1)
-
-    # Check that input file exists
-    if not os.path.isfile(input_file_path):
-        print("ERROR: input file must exist")
-        exit(1)
-
-    return input_file_path, output_file_path
-
-
-def parse_command_line():
-    """
-    Parses command line arguments, checking for --input and --output values
+    Gets a valid starting row from the user, defaulting to the one provided in the config file
     """
 
-    input_file_path = ""
-    output_file_path = ""
+    # Notify the user of the default value
+    # Use 1-indexing when communicating with the user because it is more intuitive
+    print(
+        "    Enter a starting row (1-indexed, inclusive). Default value:",
+        init_starting_row + 1,
+        "(new entries).",
+    )
 
-    # Check for --input argument (required)
-    if "--input" not in sys.argv:
-        print("ERROR: --input argument not set")
-        exit(1)
+    # Loop until a valid response is given
+    valid = False
+    while not valid:
+        # Prompt the user
+        starting_row_response = input("    Starting Row: ")
 
-    # Parse command line arguments
-    for i, arg in enumerate(sys.argv):
-        if arg == "--input":
-            if i + 1 > len(sys.argv):
-                print("ERROR: --input argument not set")
-                exit(1)
-            input_file_path = sys.argv[i + 1].strip('"')
-        elif arg == "--output":
-            if i + 1 > len(sys.argv):
-                print("ERROR: --output argument not set")
-                exit(1)
-            output_file_path = sys.argv[i + 1].strip('"')
+        # Try to convert the user's response to an int
+        try:
+            starting_row_output = int(starting_row_response)
 
-    return validate_file_paths(input_file_path, output_file_path)
+            # Check the valid bounds
+            if starting_row_output > 0 and starting_row_output <= data_length:
+                # Escape the loop if within the bounds
+                valid = True
+            else:
+                print("    Invalid starting row.\n")
+        except:
+            # If unable to convert the users response to an int,
+            # check whether the response was empty
+            if starting_row_response == "":
+                # The user's response was empty, so use the default value
+                # and escape the loop
+                starting_row_output = init_starting_row + 1
+                valid = True
+            else:
+                print("    Invalid response.\n")
+
+    # Notify the user of the selected starting row
+    # This may not be obvious if they selected the default value
+    print("    Selected Starting Row: {}\n".format(starting_row_output))
+
+    # Return the selected value, converting back to 0-indexing
+    return starting_row_output - 1
+
+
+def get_ending_row(starting_row: int, data_length: int):
+    """
+    Gets a valid ending row from the user, defaulting to the last entry
+    """
+
+    # Notify the user of the default value
+    # Use 1-indexing when communicating with the user because it is more intuitive
+    # Use an inclusive range when communicating with the user because it is more intuitive
+    print(
+        "    Enter an ending row (1-indexed, inclusive). Default value:",
+        data_length,
+        "(last entry).",
+    )
+
+    # Loop until a valid response is given
+    valid = False
+    while not valid:
+        # Prompt the user
+        ending_row_response = input("    Ending Row: ")
+
+        # Try to convert the user's response to an int
+        try:
+            ending_row_output = int(ending_row_response)
+
+            # Check the valid bounds
+            if ending_row_output > starting_row and ending_row_output <= data_length:
+                # Escape the loop if within the bounds
+                valid = True
+            else:
+                print("    Invalid ending row.\n")
+        except:
+            # If unable to convert the users response to an int,
+            # check whether the response was empty
+            if ending_row_response == "":
+                # The user's response was empty, so use the default value
+                # and escape the loop
+                ending_row_output = data_length
+                valid = True
+            else:
+                print("    Invalid response.\n")
+
+    # Notify the user of the selected starting row
+    # This may not be obvious if they selected the default value
+    print("    Selected Ending Row: {}\n".format(ending_row_output))
+
+    # Return the selected value
+    return ending_row_output
+
+
+def confirm_row_range(init_starting_row: int, data_length: int):
+    # Get a starting and ending row from the user
+    starting_row = get_starting_row(init_starting_row, data_length)
+    ending_row = get_ending_row(starting_row, data_length)
+
+    # Return validated responses
+    return starting_row, ending_row
 
 
 def add_text_box(figure, basis_x, basis_y, text, box_type):
@@ -225,6 +303,9 @@ def add_data_matrix(figure, basis_x, basis_y, data):
     """
     Generates and adds a rectangular (8 x 18) data matrix to the given figure
     """
+
+    if data is None or data == "":
+        return
 
     # Generate the data matrix using the Treepoem library (Python wrapper for BWIPP)
     image = tp.generate_barcode(
@@ -274,7 +355,7 @@ def write_pdf_page(pdf: PdfPages, data):
     )
 
     # Loop through the data entries
-    for i, entry in tqdm(enumerate(data), total=len(data)):
+    for i, entry in tqdm(enumerate(data), desc="        Labels", total=len(data)):
         # Calculate the row and column of the current label
         row = N_ROWS - (i // N_COLUMNS) - 1
         column = i % N_COLUMNS
@@ -298,23 +379,23 @@ def write_pdf_page(pdf: PdfPages, data):
         # Text Box 1 (Location)
         # Different formats for the US and Canada
         if entry[COUNTRY] == "USA":
-            text_1 = "USA:{}:{}Co {} {} {} {}m".format(
+            text_1 = "USA:{}:{}Co {} {:.3f} {:.3f} {}m".format(
                 entry[STATE],
                 entry[COUNTY],
                 entry[PLACE],
-                entry[LATITUDE],
-                entry[LONGITUDE],
+                round(float(entry[LATITUDE]), 3),
+                round(float(entry[LONGITUDE]), 3),
                 entry[ELEVATION],
             )
         elif entry[COUNTRY] == "CAN":
-            text_1 = "CANADA:{} {} {} {} {}m".format(
+            text_1 = "CANADA:{} {} {:.3f} {:.3f} {}m".format(
                 entry[STATE],
                 entry[PLACE],
                 round(float(entry[LATITUDE]), 3),
                 round(float(entry[LONGITUDE]), 3),
                 entry[ELEVATION],
             )
-        text_1 = tw.fill(text_1, 22, max_lines=3)
+        text_1 = tw.fill(text_1, 22)
 
         add_text_box(
             figure,
@@ -343,7 +424,7 @@ def write_pdf_page(pdf: PdfPages, data):
         add_text_box(figure, basis_x, basis_y, text_3, "name")
 
         # Text Box 4 (Observation No.)
-        text_4 = entry["Observation No."]
+        text_4 = entry[OBSERVATION_NUMBER]
         add_text_box(figure, basis_x, basis_y, text_4, "number")
 
         # Barcode (Data Matrix of Observation No.)
@@ -353,39 +434,68 @@ def write_pdf_page(pdf: PdfPages, data):
     pdf.savefig(figure)
 
 
-def main():
-    # Read and validate the input and output file paths
-    input_file_path, output_file_path = parse_command_line()
+def run(dataset: list):
+    try:
+        print("Creating Labels...")
 
-    # Read in the data
-    with open(input_file_path, newline="") as input_file:
-        input_data = list(csv.DictReader(input_file))
+        # Read configuration file
+        labels_config = get_labels_config()
+        output_file_path = os.path.relpath(labels_config["Output File Path"])
+        starting_row = validate_starting_row(
+            labels_config["Starting Row"], len(dataset)
+        )
 
-    # Open a PDF file
-    with PdfPages(output_file_path) as pdf:
-        # Calculate partition values
-        part_size = N_ROWS * N_COLUMNS
-        n_parts = (len(input_data) // part_size) + 1
-        part_start = 0
-        part_end = part_size
-        page_i = 1
+        # Confirm the range of rows to create labels from
+        starting_row, ending_row = confirm_row_range(starting_row, len(dataset))
 
-        # Check that the partition end doesn't exceed the total length of the data
-        if part_end > len(input_data):
-            part_end = len(input_data)
+        # Truncate dataset to create labels only from the given starting row to the ending row
+        dataset = dataset[starting_row:ending_row]
 
-        # Loop through the data, writing one page per partition
-        while part_start < len(input_data):
-            print("Page {}/{}".format(page_i, n_parts))
-            write_pdf_page(pdf, input_data[part_start:part_end])
+        # Open a PDF file
+        with PdfPages(output_file_path) as pdf:
+            # Calculate partition values
+            part_size = N_ROWS * N_COLUMNS
+            n_parts = (len(dataset) // part_size) + 1
+            part_start = 0
+            part_end = part_size
+            page_i = 1
 
-            # Increment the partition values
-            part_start = part_end
-            part_end += part_size
-            if part_end > len(input_data):
-                part_end = len(input_data)
-            page_i += 1
+            # Check that the partition end doesn't exceed the total length of the data
+            if part_end > len(dataset):
+                part_end = len(dataset)
 
+            # Loop through the data, writing one page per partition
+            while part_start < len(dataset):
+                print("    Page {}/{}".format(page_i, n_parts))
+                write_pdf_page(pdf, dataset[part_start:part_end])
 
-if __name__ == "__main__":
-    main()
+                # Increment the partition values
+                part_start = part_end
+                part_end += part_size
+                if part_end > len(dataset):
+                    part_end = len(dataset)
+                page_i += 1
+
+        print("Creating Labels => Done")
+
+        # Log a success
+        current_date = datetime.datetime.now()
+        date_str = current_date.strftime("%Y-%m-%d %H:%M:%S")
+        with open(LOG_FILE, "a") as log_file:
+            log_file.write(
+                "{}: SUCCESS - Created labels at '{}' from new data\n".format(
+                    date_str, output_file_path
+                )
+            )
+            log_file.write("\n")
+
+    except Exception:
+        # Log the error
+        current_date = datetime.datetime.now()
+        date_str = current_date.strftime("%Y-%m-%d %H:%M:%S")
+        with open(LOG_FILE, "a") as log_file:
+            log_file.write("{}: ERROR while creating labels:\n".format(date_str))
+            log_file.write(traceback.format_exc())
+            log_file.write("\n")
+
+        exit(1)
