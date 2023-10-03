@@ -90,13 +90,16 @@ def main():
 
         # Merge data with a pre-exisiting dataset
         dataset_file_path = fmd.run(formatted_dict)
+
+        # Confirm the input to the labels process with the user to avoid costly errors
+        dataset = confirm_label_input(dataset_file_path)
     else:
-        # In "labels only" mode, get a file path from the user
-        # to make labels from
+        # In "labels only" mode, get a file path from the user to make labels from
         dataset_file_path = get_dataset_file_path()
 
-    # Confirm the input to the labels process with the user to avoid costly errors
-    dataset = confirm_label_input(dataset_file_path)
+        # Read the dataset into memory
+        dataset = read_dataset(dataset_file_path)
+
     # Create labels
     fcl.run(dataset)
 

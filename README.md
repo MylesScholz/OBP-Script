@@ -231,7 +231,7 @@ All layout values are defined as constants in the first lines of full_create_lab
    1. Navigate to the target file.
    2. Left click on the target file to select it.
    3. Right click on the target file and click "Copy as Path", or press Ctrl + Shift + C, to copy the file path.
-   4. Click the terminal window in which Merge_Process.bat is running.
+   4. Click the terminal window in which the script is running.
    5. When prompted for a file path, right click, or press Ctrl + V, to paste the file path.
    6. Press Enter to submit the file path.
 
@@ -239,7 +239,7 @@ All layout values are defined as constants in the first lines of full_create_lab
    1. Navigate to the target file's folder.
    2. Click on the blank space in the file path bar near the top of the window. This should change the file path's display to text, which should be selected.
    3. Press Ctrl + C, or right click and click "Copy", to copy the file path. This will only copy up to target file's parent folder.
-   4. Click the terminal window in which Merge_Process.bat is running.
+   4. Click the terminal window in which the script is running.
    5. When prompted for a file path, right click, or press Ctrl + V, to paste the folder path.  
    6. Type slash and the target file's name and extension.
    7. Press Enter to submit the file path.
