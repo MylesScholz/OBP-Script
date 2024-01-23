@@ -8,3 +8,4 @@ test*
 *.pkl
 *.pdf
 archive
+log_file.txt

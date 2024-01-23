@@ -35,7 +35,7 @@ def get_sources():
 
 
 def read_header_format():
-    # Reader HEADER_FORMAT_FILE, which contains the header that formatted data should have
+    # Read HEADER_FORMAT_FILE, which contains the header that formatted data should have
     with open(HEADER_FORMAT_FILE, newline="") as header_file:
         csv_reader = csv.reader(header_file, delimiter="\n")
         output_header = [line[0] for line in csv_reader]
@@ -423,7 +423,7 @@ def format_scientific_name(taxon):
 
 def format_data(sources: list, observations_dict: dict, output_header: list):
     # Initialize formatted output dictionary
-    formatted_dict = {}
+    formatted_dict = {"year": observations_dict["year"]}
 
     for source in sources:
         print("    Formatting '{}' data...".format(source["Name"]))
@@ -582,7 +582,7 @@ def format_data(sources: list, observations_dict: dict, output_header: list):
     return formatted_dict
 
 
-def write_formatted_data(sources: list, formatted_dict: dict):
+def write_formatted_data(sources: list, formatted_dict: dict, output_header: dict):
     # Get the current date for naming the output folder
     current_date = datetime.datetime.now()
     date_str = "{}_{}_{}".format(
@@ -596,7 +596,7 @@ def write_formatted_data(sources: list, formatted_dict: dict):
         # Create the output file path for this source
         folder_name = "./results/{}_{}/".format(source["Abbreviation"], date_str)
 
-        query_year = source_data[0][YEAR]
+        query_year = formatted_dict["year"]
         file_name = "{}_results_{}.csv".format(source["Abbreviation"], query_year)
         file_path = os.path.relpath(folder_name + file_name)
 
@@ -613,9 +613,8 @@ def write_formatted_data(sources: list, formatted_dict: dict):
         if not os.path.isdir(folder_name):
             os.makedirs(folder_name)
 
-        source_header = source_data[0].keys()
         with open(file_path, "w", newline="") as output_file:
-            csv_writer = csv.DictWriter(output_file, fieldnames=source_header)
+            csv_writer = csv.DictWriter(output_file, fieldnames=output_header)
             csv_writer.writeheader()
             csv_writer.writerows(source_data)
 
@@ -636,7 +635,7 @@ def run(observations_dict: dict):
         print()
 
         # Write the formatted data to a CSV file in the results folder
-        write_formatted_data(sources, formatted_dict)
+        write_formatted_data(sources, formatted_dict, output_header)
 
         print("Formatting Data => Done\n")
 

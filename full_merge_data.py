@@ -292,6 +292,8 @@ def merge_data(sources: list, dataset: list, formatted_dict: dict):
         print("    Merging '{}' data with dataset...".format(source["Name"]))
 
         append_data = formatted_dict[source["Abbreviation"]]
+        if len(append_data) == 0:
+            continue
 
         # Confirm header correspondence between base and append files
         dataset_header = dataset[0].keys()

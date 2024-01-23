@@ -29,19 +29,19 @@ def get_year():
     current_year = datetime.datetime.now().year
 
     # Get the year to pull data from
-    year_input = input("    Year to Query: ")
+    while True:
+        year_input = input("    Year to Query: ")
 
-    if (
-        year_input.isnumeric()
-        and len(year_input) == 4
-        and int(year_input) <= current_year
-    ):
-        return year_input
-    else:
-        print(
-            "        ERROR: Invalid year argument, must be a four digit year less than the current year"
-        )
-        exit(1)
+        if (
+            year_input.isnumeric()
+            and len(year_input) == 4
+            and int(year_input) <= current_year
+        ):
+            return year_input
+        else:
+            print(
+                "        ERROR: Invalid year argument, must be a four digit year less than or equal to the current year"
+            )
 
 
 def get_sources():
@@ -52,12 +52,13 @@ def get_sources():
     return sources
 
 
-def pull_data(year, sources):
+def pull_data(observations_dict: dict, sources: dict):
     """
     Pulls observation data for a given year from the sources (iNaturalist projects) listed in config/sources.csv
     """
 
     # If the year is not provided, use the current year
+    year = observations_dict["year"]
     if year == "" or year is None:
         # In theory, this should be unreachable
         year = str(datetime.datetime.now().year)
@@ -65,8 +66,7 @@ def pull_data(year, sources):
     # Set the minimum date of observations to pull to the first day of the year
     min_pull_date = year + "-01-01"
 
-    # Initialize dict to capture results for each source
-    observations_dict = {}
+    # Query observations from each source
     for source in sources:
         print("    Pulling '{}' data...".format(source["Name"]))
 
@@ -226,12 +226,15 @@ def format_observations(observations: list):
     return formatted_observations
 
 
-def write_observations(observations_dict: dict, sources: list, query_year: str):
+def write_observations(observations_dict: dict, sources: list):
     # Get the current date for naming the output folder
     current_date = datetime.datetime.now()
     date_str = "{}_{}_{}".format(
         current_date.month, current_date.day, str(current_date.year)[-2:]
     )
+
+    # Get the query year from observations_dict
+    query_year = observations_dict["year"]
 
     # Create a separate output file for each source
     for source in sources:
@@ -258,7 +261,25 @@ def write_observations(observations_dict: dict, sources: list, query_year: str):
         formatted_observations = format_observations(source_observations)
 
         # Write the formatted observations to a CSV
-        source_header = formatted_observations[0].keys()
+        source_header = [
+            "id",
+            "observed_on_date",
+            "observed_on_time",
+            "user_id",
+            "user_login",
+            "user_name",
+            "created_at",
+            "uri",
+            "place_guess",
+            "latitude",
+            "longitude",
+            "positional_accuracy",
+            "place_ids",
+            "taxon_name",
+            "taxon_family_name",
+            "field_sample_id",
+            "field_bees_collected",
+        ]
         with open(file_path, "w", newline="") as output_file:
             csv_writer = csv.DictWriter(output_file, fieldnames=source_header)
             csv_writer.writeheader()
@@ -283,7 +304,7 @@ def write_to_places_file(places):
         places_file.write(json.dumps(places))
 
 
-def update_places(sources, observations_dict):
+def update_places(observations_dict: dict, sources: dict):
     """
     Reads the list of known place IDs from places.json and updates it with new data
     """
@@ -336,8 +357,11 @@ def run():
     try:
         print("Pulling Data...")
 
+        # Initialize dict to capture results
+        observations_dict = {}
+
         # Get the year to query from the user
-        year = get_year()
+        observations_dict["year"] = get_year()
 
         # Read the source names and ids to pull from (iNaturalist projects)
         sources = get_sources()
@@ -345,17 +369,17 @@ def run():
         print()
 
         # Query the iNaturalist API for observations for each project
-        observations_dict = pull_data(year, sources)
+        observations_dict = pull_data(observations_dict, sources)
 
         print()
 
         # Write the observations (with some reformatting) to a CSV in the data folder
-        write_observations(observations_dict, sources, year)
+        write_observations(observations_dict, sources)
 
         print()
 
         # Update known places
-        update_places(sources, observations_dict)
+        update_places(observations_dict, sources)
 
         print("Pulling Data => Done\n")
 
@@ -364,7 +388,9 @@ def run():
         date_str = current_date.strftime("%Y-%m-%d %H:%M:%S")
         with open(LOG_FILE, "a") as log_file:
             log_file.write(
-                "{}: SUCCESS - Pulled {} data from sources:\n".format(date_str, year)
+                "{}: SUCCESS - Pulled {} data from sources:\n".format(
+                    date_str, observations_dict["year"]
+                )
             )
             for source in sources:
                 log_file.write("    {}\n".format(source["Name"]))
