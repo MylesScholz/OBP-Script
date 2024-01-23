@@ -568,8 +568,8 @@ def format_data(sources: list, observations_dict: dict, output_header: list):
                 except ValueError:
                     formatted_dict[source["Abbreviation"]].append(formatted_observation)
                 else:
-                    # If there were multiple bees collected (specimen ID > 1), create entries for each bee
-                    if specimen_id > 1:
+                    # If there were any bees collected (specimen ID >= 1), create entries for each bee
+                    if specimen_id >= 1:
                         # Duplicate the entry, except for the specimen ID, which will index the duplicates
                         for i in range(1, specimen_id + 1):
                             dup_observation = formatted_observation.copy()
