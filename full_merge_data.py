@@ -295,17 +295,18 @@ def merge_data(sources: list, dataset: list, formatted_dict: dict):
         if len(append_data) == 0:
             continue
 
-        # Confirm header correspondence between base and append files
-        dataset_header = dataset[0].keys()
-        append_header = append_data[0].keys()
-        if any(
-            [
-                base_column != append_column
-                for base_column, append_column in zip(dataset_header, append_header)
-            ]
-        ):
-            print("ERROR: base and append file headers do not match")
-            exit(1)
+        # Confirm header correspondence between base and append files (if dataset is non-empty)
+        if len(dataset) != 0:
+            dataset_header = dataset[0].keys()
+            append_header = append_data[0].keys()
+            if any(
+                [
+                    base_column != append_column
+                    for base_column, append_column in zip(dataset_header, append_header)
+                ]
+            ):
+                print("ERROR: base and append file headers do not match")
+                exit(1)
 
         # Loop through the data to append, checking for duplicates and updates
         for row in tqdm(append_data, desc="        Entries"):

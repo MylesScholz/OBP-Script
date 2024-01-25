@@ -133,7 +133,7 @@ def format_month(decimal_month: str):
         "IX",
         "X",
         "XI",
-        "XIII",
+        "XII",
     ]
 
     # Convert the given decimal month value to Roman numerals using the list
