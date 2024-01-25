@@ -63,8 +63,9 @@ def pull_data(observations_dict: dict, sources: dict):
         # In theory, this should be unreachable
         year = str(datetime.datetime.now().year)
 
-    # Set the minimum date of observations to pull to the first day of the year
+    # Set the minimum and maximum dates of observations to pull
     min_pull_date = year + "-01-01"
+    max_pull_date = year + "-12-31"
 
     # Query observations from each source
     for source in sources:
@@ -72,7 +73,7 @@ def pull_data(observations_dict: dict, sources: dict):
 
         # Pull first page of observation data (maximum of 200 per page)
         reply_dict = pyinaturalist.v1.observations.get_observations(
-            d1=min_pull_date, project_id=source["ID"], per_page=200
+            d1=min_pull_date, d2=max_pull_date, project_id=source["ID"], per_page=200
         )
 
         # Calculate the number of pages that need to be pulled
@@ -90,6 +91,7 @@ def pull_data(observations_dict: dict, sources: dict):
             # Get next 200 entries and append them to results
             reply_dict["results"] += pyinaturalist.v1.observations.get_observations(
                 d1=min_pull_date,
+                d2=max_pull_date,
                 project_id=source["ID"],
                 per_page=200,
                 page=page_i,
