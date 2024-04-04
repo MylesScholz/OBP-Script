@@ -54,50 +54,50 @@ TEXT_BOXES = {
         "y_position": LABEL_HEIGHT - 0.005,
         "alignment": "top",
         "font_size": 4.5,
-        "font_family": ["Gill Sans MT Condensed", "Avenir Next Condensed Regular"],
-        "font_style": "normal",
-        "line_height": 0.8,
+        "font_file": "fonts/Gill Sans MT Condensed.ttf",
+        "line_height": 1.0,
         "rotation": 0,
+        "cutoff_point": (TEXT_CUTOFF, LABEL_HEIGHT - 0.175),
     },
     "date": {  # Collection Date
         "x_position": 0.005,
         "y_position": LABEL_HEIGHT - 0.175,
         "alignment": "top",
         "font_size": 6.3,
-        "font_family": ["Gill Sans MT Condensed", "Avenir Next Condensed Regular"],
-        "font_style": "normal",
-        "line_height": 0.8,
+        "font_file": "fonts/Gill Sans MT Condensed.ttf",
+        "line_height": 1.0,
         "rotation": 0,
+        "cutoff_point": (TEXT_CUTOFF, 0.065),
     },
     "name": {  # Collector Name
         "x_position": 0.005,
         "y_position": 0.005,
         "alignment": "bottom",
         "font_size": 4.5,
-        "font_family": ["Gill Sans MT", "Avenir Next Regular"],
-        "font_style": "italic",
-        "line_height": 0.8,
+        "font_file": "fonts/Gill Sans MT Italic.ttf",
+        "line_height": 1.0,
         "rotation": 0,
+        "cutoff_point": (TEXT_CUTOFF, 0),
     },
     "method": {
         "x_position": LABEL_WIDTH - 0.275,
         "y_position": 0.005,
         "alignment": "bottom",
         "font_size": 4.5,
-        "font_family": ["Gill Sans MT", "Avenir Next Regular"],
-        "font_style": "italic",
-        "line_height": 0.8,
+        "font_file": "fonts/Gill Sans MT Italic.ttf",
+        "line_height": 1.0,
         "rotation": 0,
+        "cutoff_point": (TEXT_CUTOFF, 0),
     },
     "number": {  # Observation No.
         "x_position": LABEL_WIDTH + 0.005,
         "y_position": 0.01,
         "alignment": "bottom",
         "font_size": 6,
-        "font_family": ["Gill Sans MT", "Avenir Next Regular"],
-        "font_style": "normal",
-        "line_height": 0.8,
+        "font_file": "fonts/Gill Sans MT.ttf",
+        "line_height": 1.0,
         "rotation": 90,
+        "cutoff_point": (0, 0),
     },
 }
 
@@ -274,14 +274,15 @@ def add_text_box(figure, basis_x, basis_y, text, box_type):
     # Fetch the specified text box layout and formatting preset
     box_obj = TEXT_BOXES[box_type]
 
+    font_properties = mpl.font_manager.FontProperties(fname=box_obj["font_file"])
+
     # Add the text box
     text = figure.text(
         basis_x + box_obj["x_position"],
         basis_y + box_obj["y_position"],
         text,
         size=box_obj["font_size"],
-        name=box_obj["font_family"],
-        style=box_obj["font_style"],
+        font_properties=font_properties,
         linespacing=box_obj["line_height"],
         ha="left",
         va=box_obj["alignment"],
@@ -294,7 +295,26 @@ def add_text_box(figure, basis_x, basis_y, text, box_type):
     r = figure.canvas.get_renderer()
     text_bbox = text.get_window_extent(renderer=r)
     # Decrement font size until the cutoff no longer overlaps with the text box
-    while text_bbox.fully_containsx((TEXT_CUTOFF + basis_x) * figure.dpi):
+    cutoff_point = (
+        (box_obj["cutoff_point"][0] + basis_x) * figure.dpi,
+        (box_obj["cutoff_point"][1] + basis_y) * figure.dpi,
+    )
+
+    # Debug print out for layout editing
+    # print(
+    #     box_type,
+    #     "extents:",
+    #     (
+    #         (text_bbox.extents[0] / figure.dpi) - basis_x,
+    #         (text_bbox.extents[1] / figure.dpi) - basis_y,
+    #         (text_bbox.extents[2] / figure.dpi) - basis_x,
+    #         (text_bbox.extents[3] / figure.dpi) - basis_y,
+    #     ),
+    # )
+
+    while text.get_fontsize() > 1 and (
+        text_bbox.containsx(cutoff_point[0]) or text_bbox.containsy(cutoff_point[1])
+    ):
         text.set_fontsize(text.get_fontsize() - 0.1)
         text_bbox = text.get_window_extent(renderer=r)
 
