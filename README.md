@@ -12,7 +12,7 @@ There are two ways to run the scripts:
 2. **Labels Only Mode** - the program creates labels from a given formatted dataset
    * This option exists because creating labels is time-consuming, so the user may wish to run it as a separate process.
 
-These processes can be run by executing (double-clicking) Full_Process.bat or Labels_Process.bat, respectively. See the corresponding sections below for details.
+These processes can be run by executing (double-clicking) Full_Process.bat or Labels_Process.bat, respectively (Full_Process.sh and Labels_Process.sh on MacOS). See the corresponding sections below for details.
 
 ## **Installation**
 These scripts depend on a several pieces of third-party software to function. For developers' convenience, there is a list in OBP-Script/config/dependencies.txt. This section will provide instructions on how to install each in order on a Windows computer.
@@ -49,7 +49,7 @@ After completing the above steps, the scripts should be able to run on the compu
 
 
 ## **Full Pipeline Mode**
-This script (Full_Process.bat) executes the full data pipeline in four steps:
+This script (Full_Process.bat/Full_Process.sh) executes the full data pipeline in four steps:
    1. Pulling data
    2. Formatting data
    3. Merging data
@@ -60,7 +60,7 @@ The first three steps always run in Full Pipeline Mode and cannot be paused. The
 
 ### **Running the Process**
 0. Check that the script is configured properly. Each step has a configuration file in OBP-Script/config/. See the respective section below for details on how to configure them.
-1. Execute (double-click) Full_Process.bat.
+1. Execute (double-click) Full_Process.bat (Full_Process.sh on MacOS).
 2. A terminal will open and the program will run. When prompted, enter the requested information. See each step's section below for details on answering the prompts.
 3. The locations of the output files for each step are detailed in the corresponding section below.
 
