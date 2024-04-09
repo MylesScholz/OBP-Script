@@ -74,7 +74,7 @@ TEXT_BOXES = {
         "y_position": 0.005,
         "alignment": "bottom",
         "font_size": 4.5,
-        "font_file": "fonts/Gill Sans MT Italic.ttf",
+        "font_file": "fonts/Gill Sans MT.ttf",
         "line_height": 1.0,
         "rotation": 0,
         "cutoff_point": (TEXT_CUTOFF, 0),
