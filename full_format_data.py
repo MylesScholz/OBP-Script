@@ -65,7 +65,9 @@ def format_name(user_login: str, user_name: str):
     user_first_name = user_first_initial = user_last_name = ""
 
     # Check usernames.csv for manually entered name
-    with open(USER_NAMES_FILE, "r", encoding="iso-8859-1") as user_names_file:
+    with open(
+        USER_NAMES_FILE, "r", encoding="iso-8859-1", errors="replace"
+    ) as user_names_file:
         for row in user_names_file:
             # Remove trailing characters and split line into array
             row = row.rstrip("\r\n")
