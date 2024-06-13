@@ -61,7 +61,9 @@ def read_dataset(input_file_path: str):
     print("    Loading dataset...")
 
     # Read the dataset at "Input File Path" into memory
-    with open(input_file_path, newline="") as dataset_file:
+    with open(
+        input_file_path, newline="", encoding="iso-8859-1", errors="replace"
+    ) as dataset_file:
         dataset = list(csv.DictReader(dataset_file))
 
     return dataset
