@@ -6,6 +6,8 @@ import datetime
 import functools
 import os
 import traceback
+import tkinter as tk
+from tkinter import filedialog
 
 from tqdm import tqdm
 
@@ -413,6 +415,22 @@ def run(formatted_dict: dict):
         input_file_path = os.path.relpath(merge_config["Input File Path"])
         output_file_path = os.path.relpath(merge_config["Output File Path"])
 
+        root = tk.Tk()
+        root.withdraw()
+
+        # Prompt the user with a file select dialog if specified
+        if input_file_path.lower() == "select":
+            input_file_path = filedialog.askopenfilename(
+                initialdir="../", filetypes=[("CSV Files", "*.csv")]
+            )
+
+        if output_file_path.lower() == "select":
+            output_file_path = filedialog.asksaveasfilename(
+                initialdir="../", filetypes=[("CSV Files", "*.csv")]
+            )
+
+        root.update()
+
         # Read the dataset from its file into memory
         dataset = read_dataset(input_file_path)
 
@@ -454,4 +472,9 @@ def run(formatted_dict: dict):
             log_file.write(traceback.format_exc())
             log_file.write("\n")
 
+        input(
+            "An error occurred while merging data. Check {} for details.".format(
+                LOG_FILE
+            )
+        )
         exit(1)

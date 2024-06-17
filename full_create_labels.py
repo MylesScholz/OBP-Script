@@ -518,4 +518,9 @@ def run(dataset: list):
             log_file.write(traceback.format_exc())
             log_file.write("\n")
 
+        input(
+            "An error occurred while creating labels. Check {} for details.".format(
+                LOG_FILE
+            )
+        )
         exit(1)

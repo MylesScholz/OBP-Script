@@ -409,4 +409,9 @@ def run():
             log_file.write(traceback.format_exc())
             log_file.write("\n")
 
+        input(
+            "An error occurred while pulling data. Check {} for details.".format(
+                LOG_FILE
+            )
+        )
         exit(1)
