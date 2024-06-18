@@ -59,6 +59,15 @@ def get_merge_config():
     return merge_config
 
 
+def write_merge_config(merge_config):
+    # Open MERGE_CONFIG_FILE to write updated input and output file paths
+    merge_config_header = ["Input File Path", "Output File Path"]
+    with open(MERGE_CONFIG_FILE, "w", newline="") as merge_config_file:
+        csv_writer = csv.DictWriter(merge_config_file, fieldnames=merge_config_header)
+        csv_writer.writeheader()
+        csv_writer.writerow(merge_config)
+
+
 def read_dataset(input_file_path: str):
     print("    Loading dataset...")
 
@@ -416,20 +425,25 @@ def run(formatted_dict: dict):
         output_file_path = os.path.relpath(merge_config["Output File Path"])
 
         root = tk.Tk()
-        root.withdraw()
+        root.attributes("-alpha", 0.0)
+        root.attributes("-topmost", True)
 
         # Prompt the user with a file select dialog if specified
         if input_file_path.lower() == "select":
             input_file_path = filedialog.askopenfilename(
-                initialdir="../", filetypes=[("CSV Files", "*.csv")]
+                initialdir="../", filetypes=[("CSV Files", "*.csv")], parent=root
             )
+            merge_config["Input File Path"] = os.path.relpath(input_file_path)
+            write_merge_config(merge_config)
 
         if output_file_path.lower() == "select":
             output_file_path = filedialog.asksaveasfilename(
-                initialdir="../", filetypes=[("CSV Files", "*.csv")]
+                initialdir="../", filetypes=[("CSV Files", "*.csv")], parent=root
             )
+            merge_config["Output File Path"] = os.path.relpath(output_file_path)
+            write_merge_config(merge_config)
 
-        root.update()
+        root.destroy()
 
         # Read the dataset from its file into memory
         dataset = read_dataset(input_file_path)

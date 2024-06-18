@@ -5,6 +5,8 @@ import csv
 import datetime
 import os
 import traceback
+import tkinter as tk
+from tkinter import filedialog
 
 import textwrap as tw
 import matplotlib as mpl
@@ -144,6 +146,15 @@ def get_labels_config():
         labels_config = list(csv.DictReader(labels_config_file))[0]
 
     return labels_config
+
+
+def write_labels_config(labels_config):
+    # Open LABELS_CONFIG_FILE to write updated output file path
+    labels_config_header = ["Output File Path", "Starting Row"]
+    with open(LABELS_CONFIG_FILE, "w", newline="") as labels_config_file:
+        csv_writer = csv.DictWriter(labels_config_file, fieldnames=labels_config_header)
+        csv_writer.writeheader()
+        csv_writer.writerow(labels_config)
 
 
 def validate_starting_row(starting_row_entry: str, maximum: int):
@@ -464,6 +475,19 @@ def run(dataset: list):
         starting_row = validate_starting_row(
             labels_config["Starting Row"], len(dataset)
         )
+
+        root = tk.Tk()
+        root.attributes("-alpha", 0.0)
+        root.attributes("-topmost", True)
+
+        if output_file_path.lower() == "select":
+            output_file_path = filedialog.asksaveasfilename(
+                initialdir="../", filetypes=[("PDF Files", "*.pdf")]
+            )
+            labels_config["Output File Path"] = os.path.relpath(output_file_path)
+            write_labels_config(labels_config)
+
+        root.destroy()
 
         # Confirm the range of rows to create labels from
         starting_row, ending_row = confirm_row_range(starting_row, len(dataset))

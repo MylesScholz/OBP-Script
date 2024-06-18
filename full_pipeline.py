@@ -3,8 +3,9 @@
 # Description: Executes the full data pipeline for updating the Oregon Bee Atlas database
 import csv
 import os
-import pickle
 import sys
+import tkinter as tk
+from tkinter import filedialog
 
 import full_data_pull as fdp
 import full_format_data as ffd
@@ -19,28 +20,33 @@ def get_dataset_file_path():
     """
     dataset_file_path = ""
 
+    root = tk.Tk()
+    root.attributes("-alpha", 0.0)
+    root.attributes("-topmost", True)
+
     # Get user input until they provide a valid file path or quit
     print("Dataset File: the file to create labels from\n")
     while dataset_file_path == "":
         # Prompt the user
-        file_path_response = input(
-            "Enter a relative or absolute file path, including the file "
-            "extension, or 'q' to quit: "
+        file_path_response = filedialog.askopenfilename(
+            initialdir="../", filetypes=[("CSV Files", "*.csv")], parent=root
         )
-        # Trim quotation marks from the response (aids copy-pasting file paths)
-        file_path_response = file_path_response.strip('"')
+
+        print(file_path_response)
 
         # Check the response for one of the options
-        if file_path_response.lower() == "q":
+        if file_path_response.lower() == "":
             exit(0)
         elif not os.path.isfile(file_path_response):
             print("ERROR: file does not exist\n")
         elif not file_path_response.lower().endswith(".csv"):
             print("ERROR: file is not a CSV file\n")
         else:
-            print()
-            # Reduce the file path to a relative path and return it
-            return os.path.relpath(file_path_response)
+            # Reduce the file path to a relative path and set it to be returned
+            dataset_file_path = os.path.relpath(file_path_response)
+
+    root.destroy()
+    return dataset_file_path
 
 
 def read_dataset(file_path: str):
