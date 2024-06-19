@@ -487,8 +487,6 @@ def run(dataset: list):
             labels_config["Output File Path"] = os.path.relpath(output_file_path)
             write_labels_config(labels_config)
 
-        root.destroy()
-
         # Confirm the range of rows to create labels from
         starting_row, ending_row = confirm_row_range(starting_row, len(dataset))
 
@@ -521,6 +519,8 @@ def run(dataset: list):
                 page_i += 1
 
         print("Creating Labels => Done")
+
+        root.destroy()
 
         # Log a success
         current_date = datetime.datetime.now()

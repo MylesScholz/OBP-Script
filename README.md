@@ -131,7 +131,7 @@ If the program is run a second time on the same day with the same query year, th
 
 
 ### **Step 3: Merging and Indexing Formatted Data**
-In this step, the program will combine formatted data from the previous step with an existing dataset of the same format. It will detect duplicate entries and sort and index the output dataset. The input and output file paths for this step are defined in OBP-Script/config/merge_config.csv (see "Data Merging Configuration" below). These files must be CSV files, and the input file must have the exact header specified in OBP-Script/config/header_format.txt.
+In this step, the program will combine formatted data from the previous step with an existing dataset of the same format. It will detect duplicate entries and sort and index the output dataset. The input and output file paths for this step are defined in OBP-Script/config/merge_config.csv (see "Data Merging Configuration" below). These files must be CSV files, and the input file must have the exact header specified in OBP-Script/config/header_format.txt. There are special options to prompt the user for these files through a file select dialog.
 
 ### Data Merging Configuration
 The input and output file paths for the data merging step are specified in OBP-Script/config/merge_config.csv. This file is in a CSV format with two columns:
@@ -141,15 +141,19 @@ The input and output file paths for the data merging step are specified in OBP-S
 To set the input and output file paths, do the following:
 1. Open OBP-Script/config/merge_config.csv in a text editor or Excel.
 2. On the first line below the column names, select the value before the first comma (cell A2 in Excel).
-3. Type the new value for the Input File Path.
+3. Type a new value for the Input File Path. The value "Select" (not case-sensitive) will cause the program to prompt the user for a file through a file select dialog.
 4. On the same line, select the value after the first comma (cell B2).
-5. Type the new value for the Output File Path.
+5. Type the new value for the Output File Path. The value "Select" (not case-sensitive) will cause the program to prompt the user for a file through a file select dialog.
 6. Save and close merge_config.csv.
 
 See "Help and Tips - File Paths" for information about file paths.
 
 ### Data Merging Prompts
-There are no user prompts for this step.
+If the Input File Path is set to "Select", the program will prompt the user at the beginning of this step through an "Open" file select dialog. Navigate to the desired file and click "Open" to choose the input file for the merge step.
+
+If the Output File Path is set to "Select", the program will prompt the user through a "Save As" file select dialog. Navigate to the desired directory, type the name of the output file in the "File name" box, and click "Save".
+
+The program will automatically save these values as relative file paths in OBP-Script/config/merge_config.csv for future executions.
 
 ### Data Merging Output
 The data merging step outputs the resulting merged dataset to the file path specified in its configuration. The program checks the data for duplicate entries and adds indices to new data.
@@ -174,7 +178,7 @@ in ascending order, with blank values being put at the end. If all "Observation 
 
 
 ### Step 4: Creating Labels from Formatted Data
-This step will create a PDF of labels with formatted data from the previous steps or from a CSV file, depending on how it was executed. If this step is reached in Full Pipeline Mode, the user will have the opportunity to check the data before the program begins creating labels. If this step is reached in Labels Only Mode, the user will need to provide a file path of a formatted CSV dataset as input. See "Label Creation Prompts" below for details.
+This step will create a PDF of labels with formatted data from the previous steps or from a CSV file, depending on how it was executed. If this step is reached in Full Pipeline Mode, the user will have the opportunity to check the data before the program begins creating labels. If this step is reached in Labels Only Mode, the user will need to provide a formatted CSV dataset as input. See "Label Creation Prompts" below for details.
 
 ### Label Creation Configuration
 The label creation step will output the labels to a PDF file path specified in OBP-Script/config/labels_config.csv. The configuration file also specifies the default row number in the input dataset from which to create labels. This value is set by the merging process and is optional (see "Label Creation Prompts" below), so editing it is not recommended.
@@ -184,15 +188,17 @@ The label creation step will output the labels to a PDF file path specified in O
 To set the Output File Path, do the following:
 1. Open OBP-Script/config/labels_config.csv in a text editor or Excel.
 2. On the first line after the column names, select the value before the first comma (cell A2 in Excel).
-3. Type the new value for the Output File Path.
+3. Type the new value for the Output File Path. The value "Select" (not case-sensitive) will cause the program to prompt the user for a file through a file select dialog.
 4. Save and close labels_config.csv.
 
 ### Label Creation Prompts
-The prompts for the label creation step begin differently, depending on whether the program is in Full Pipeline Mode or Labels Only Mode.
+The prompts for the label creation step begin differently depending on whether the program is in Full Pipeline Mode or Labels Only Mode.
 
 In Full Pipeline Mode, after the merging step is complete, the user will be prompted to check the dataset and respond affirmatively to proceed with label creation. It is recommended to look over the data in the output file of the merging step (located at the Output File Path in OBP-Script/config/merge_config.csv). When ready, type Y or y and Enter to continue. If the user wishes to end the program, they may type any other character (or no characters) and Enter to do so.
 
-In Labels Only Mode, when the user runs the script, they will be prompted to enter a file path for an input dataset. The file path may be relative or absolute and may be wrapped in quotation marks (see "Help and Tips - File Paths" below). The input dataset should be a formatted CSV file with the exact header specified in OBP-Script/config/header_format.txt.
+In Labels Only Mode, when the user runs the script, an "Open" file select dialog will appear to choose an input dataset. Navigate to the desired file and click "Open" to select it. The input dataset should be a formatted CSV file with the exact header specified in OBP-Script/config/header_format.txt.
+
+If the Output File Path is set to "Select", the program will next prompt the user  through a "Save As" file select dialog. Navigate to the desired directory, type the name of the output file in the "File name" box, and click "Save".
 
 After the above prompts, Full Pipeline Mode and Labels Only Mode have the same prompts.
 

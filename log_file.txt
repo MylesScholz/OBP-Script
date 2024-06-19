@@ -1,0 +1,14 @@
+2024-06-18 18:21:41: SUCCESS - Pulled 2024 data from sources:
+    Oregon Bee Atlas (Plant Images/SampleID)
+    Master Melittologist (outside of Oregon)
+    Washington Bee Atlas (WaBA): Plant images/Sample IDs
+
+2024-06-18 18:21:47: SUCCESS - Formatted data from sources:
+    Oregon Bee Atlas (Plant Images/SampleID)
+    Master Melittologist (outside of Oregon)
+    Washington Bee Atlas (WaBA): Plant images/Sample IDs
+
+2024-06-18 18:29:37: SUCCESS - Merged new data with 'C:/Users/Myles Scholz/Documents/Oregon Bee Project/Python Script/All Location Labels.csv' into 'C:/Users/Myles Scholz/Documents/Oregon Bee Project/Python Script/All Location Labels Updated.csv'
+
+2024-06-18 18:30:57: SUCCESS - Created labels at 'C:/Users/Myles Scholz/Documents/Oregon Bee Project/Python Script/Labels.pdf' from new data
+
