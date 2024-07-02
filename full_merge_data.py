@@ -406,7 +406,9 @@ def write_dataset(output_file_path: str, merged_dataset: list):
     print("    Writing merged data to '{}'...".format(output_file_path))
 
     dataset_header = merged_dataset[0].keys()
-    with open(output_file_path, "w", newline="") as output_file:
+    with open(
+        output_file_path, "w", newline="", encoding="iso-8859-1", errors="replace"
+    ) as output_file:
         csv_writer = csv.DictWriter(output_file, fieldnames=dataset_header)
         csv_writer.writeheader()
         csv_writer.writerows(merged_dataset)
