@@ -73,7 +73,7 @@ def read_dataset(input_file_path: str):
 
     # Read the dataset at "Input File Path" into memory
     with open(
-        input_file_path, newline="", encoding="iso-8859-1", errors="replace"
+        input_file_path, newline="", encoding="utf-8", errors="replace"
     ) as dataset_file:
         dataset = list(csv.DictReader(dataset_file))
 
@@ -407,7 +407,7 @@ def write_dataset(output_file_path: str, merged_dataset: list):
 
     dataset_header = merged_dataset[0].keys()
     with open(
-        output_file_path, "w", newline="", encoding="iso-8859-1", errors="replace"
+        output_file_path, "w", newline="", encoding="utf-8", errors="replace"
     ) as output_file:
         csv_writer = csv.DictWriter(output_file, fieldnames=dataset_header)
         csv_writer.writeheader()
