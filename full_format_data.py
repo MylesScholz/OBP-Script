@@ -75,34 +75,15 @@ def format_name(user_login: str, user_name: str):
 
             if row[1] == user_login:
                 user_full_name_split = row[0].split(" ")
-                # User first name has caveats as below
+                # User first name assumed to be the first space-separated word in their full name
+                # This will not capture middle names or compound first names (e.g., Mary Jo)
                 user_first_name = user_full_name_split[0]
                 user_first_initial = user_first_name[0] + "."
 
-                # User last name has caveats as below
+                # User last name assumed to be the last space-separated word in their full name
+                # This will not capture middle names or compound last names (e.g., van Horn)
+                # If there is only one name provided, the last name will be empty
                 user_last_name = user_full_name_split[-1]
-
-    # If name still unassigned, check user_full_name (from iNaturalist)
-    if (
-        user_first_name == ""
-        and user_first_initial == ""
-        and user_last_name == ""
-        and user_name != ""
-        and user_name is not None
-    ):
-        user_full_name_split = user_name.split(" ")
-
-        # User first name assumed to be the first space-separated word in their full name
-        # This will not capture middle names or compound first names (e.g., Mary Jo)
-        if user_first_name == "":
-            user_first_name = user_full_name_split[0]
-            user_first_initial = user_first_name[0] + "."
-
-        # User last name assumed to be the last space-separated word in their full name
-        # This will not capture middle names or compound last names (e.g., van Horn)
-        # If there is only one name provided, the last name will be empty
-        if len(user_full_name_split) > 1 and user_last_name == "":
-            user_last_name = user_full_name_split[-1]
 
     return user_first_name, user_first_initial, user_last_name
 

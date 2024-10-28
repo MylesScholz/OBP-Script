@@ -5,18 +5,22 @@ import csv
 import datetime
 import functools
 import os
+import tempfile
+import hashlib
 import traceback
 import tkinter as tk
 from tkinter import filedialog
+from collections import deque
+import shutil
 
-from tqdm import tqdm
 
-
-# File Name Constants
+# File I/O Constants
 SOURCES_FILE = "config/sources.csv"
 MERGE_CONFIG_FILE = "config/merge_config.csv"
 LABELS_CONFIG_FILE = "config/labels_config.csv"
 LOG_FILE = "log_file.txt"
+CHUNK_SIZE = 10000
+MERGE_SIZE = 2
 
 # Column Name Constants
 
@@ -68,16 +72,21 @@ def write_merge_config(merge_config):
         csv_writer.writerow(merge_config)
 
 
-def read_dataset(input_file_path: str):
-    print("    Loading dataset...")
+def read_csv_chunks(file_path):
+    chunk = []
+    with open(file_path, newline="", encoding="utf-8", errors="replace") as file:
+        reader = csv.DictReader(file)
 
-    # Read the dataset at "Input File Path" into memory
-    with open(
-        input_file_path, newline="", encoding="utf-8", errors="replace"
-    ) as dataset_file:
-        dataset = list(csv.DictReader(dataset_file))
-
-    return dataset
+        # Loop through the given file and yield chunks while maintaining state between calls
+        for row in reader:
+            chunk.append(row)
+            # Yield chunk when it reaches CHUNK_SIZE
+            if len(chunk) >= CHUNK_SIZE:
+                yield chunk
+                chunk = []
+        # Yield the final partial chunk
+        if chunk:
+            yield chunk
 
 
 def row_is_empty(row: dict):
@@ -89,87 +98,81 @@ def row_is_empty(row: dict):
     return True
 
 
-def remove_empty_rows(data: list):
-    # Define a new list to hold non-empty data
-    pruned_data = []
-
-    # Loop through the data only adding non-empty data to pruned_data
-    for row in data:
-        if not row_is_empty(row):
-            pruned_data.append(row)
-
-    return pruned_data
-
-
-def str_to_int_catch(string: str):
-    """
-    Attempts to convert a string to an integer, catching errors if unsuccessful
-    """
-
-    try:
-        value = int(string)
-    except:
-        value = string
-
-    return value
-
-
-def equal_identifiers(row1: dict, row2: dict):
-    """
-    A Boolean function that compares two rows of formatted data
-    Returns true if there is a match of any of the following, in order:
-    1. Observation No.
-    2. Associated plant - Inaturalist URL, Sample ID, and Specimen ID
-    3. iNaturalist Alias, Sample ID, Specimen ID, Collection Day 1, Month 1, and Year 1
-    """
-
-    obs_no_1 = str_to_int_catch(row1[OBSERVATION_NUMBER])
-    obs_no_2 = str_to_int_catch(row2[OBSERVATION_NUMBER])
-
-    sample_id_1 = str_to_int_catch(row1[SAMPLE_ID])
-    sample_id_2 = str_to_int_catch(row2[SAMPLE_ID])
-
-    specimen_id_1 = str_to_int_catch(row1[SPECIMEN_ID])
-    specimen_id_2 = str_to_int_catch(row2[SPECIMEN_ID])
-
-    day_1 = str_to_int_catch(row1[DAY])
-    day_2 = str_to_int_catch(row2[DAY])
-
-    year_1 = str_to_int_catch(row1[YEAR])
-    year_2 = str_to_int_catch(row2[YEAR])
-
-    if obs_no_1 != "" and obs_no_1 == obs_no_2:
-        return True
+def generate_key(row):
+    # Choose identifying key fields based on if those values exist in the following sets:
+    # 1. Associated plant - Inaturalist URL, Sample ID, and Specimen ID
+    # 2. iNaturalist Alias, Sample ID, Specimen ID, Collection Day 1, Month 1, and Year 1
+    key_fields = []
+    if row.get(URL) and row.get(SAMPLE_ID) and row.get(SPECIMEN_ID):
+        key_fields = [URL, SAMPLE_ID, SPECIMEN_ID]
     elif (
-        row1[URL] == row2[URL]
-        and row1[URL] != ""
-        and sample_id_1 == sample_id_2
-        and specimen_id_1 == specimen_id_2
+        row.get(ALIAS)
+        and row.get(SAMPLE_ID)
+        and row.get(SPECIMEN_ID)
+        and row.get(DAY)
+        and row.get(MONTH)
+        and row.get(YEAR)
     ):
-        return True
-    elif (
-        row1[ALIAS] == row2[ALIAS]
-        and sample_id_1 == sample_id_2
-        and specimen_id_1 == specimen_id_2
-        and day_1 == day_2
-        and row1[MONTH] == row2[MONTH]
-        and year_1 == year_2
-    ):
-        return True
+        key_fields = [ALIAS, SAMPLE_ID, SPECIMEN_ID, DAY, MONTH, YEAR]
 
-    return False
+    # Convert the key fields to their values (as strings)
+    key_values = [str(row.get(field, "")) for field in key_fields]
+
+    # Concatenate and encode the key values as a single identifying key
+    composite_key = hashlib.sha256(",".join(key_values).encode("utf-8")).hexdigest()
+
+    return composite_key
 
 
-def search_data_for_row(data: list, row: dict):
-    # Search the data linearly
-    for i, entry in enumerate(data):
-        # Check if all keys match
-        if equal_identifiers(entry, row):
-            # Return the index of the matching row
-            return i
+def sort_and_dedupe_chunk(chunk, seen_keys):
+    unique_rows = []
 
-    # Set default return value to -1 (row not found in data)
-    return -1
+    # Loop through the chunk and add rows with observation numbers first
+    for row in chunk:
+        # Skip empty rows
+        if row_is_empty(row):
+            continue
+
+        # If the row has an observation number, assume it is unique, add its key to the seen_keys list, and append the row to unique_rows
+        if row[OBSERVATION_NUMBER]:
+            # Create a unique key field for the row
+            key = generate_key(row)
+
+            # Add the key and row
+            seen_keys.add(key)
+            unique_rows.append(row)
+
+    # Loop through the chunk again, this time adding any other unique rows
+    for row in chunk:
+        # Skip empty rows
+        if row_is_empty(row):
+            continue
+
+        # Create a unique key field for the row
+        key = generate_key(row)
+
+        # If the row's key has not yet been seen, add it to seen_keys and append the row to unique_rows
+        if key not in seen_keys:
+            seen_keys.add(key)
+            unique_rows.append(row)
+
+    return sorted(unique_rows, key=functools.cmp_to_key(compare_rows))
+
+
+def write_chunk_to_temp(chunk, fieldnames, temp_files):
+    # Create a temporary file to output to
+    fd, path = tempfile.mkstemp(suffix=".csv", dir="./temp")
+    temp_files.append(path)
+
+    # Write the given chunk to the temporary file and add it to the list of current temporary files
+    with os.fdopen(
+        fd, "w", newline="", encoding="utf-8", errors="replace"
+    ) as temp_file:
+        writer = csv.DictWriter(temp_file, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(chunk)
+
+    return path
 
 
 def compare_numerical_string(string1: str, string2: str):
@@ -294,54 +297,132 @@ def compare_rows(row1: dict, row2: dict):
     return 0
 
 
-def merge_data(sources: list, dataset: list, formatted_dict: dict):
+def merge_files_batch(input_files, output_file, sort_key, fieldnames):
     """
-    Merges formatted iNaturalist data and a pre-existing dataset into a single sorted and indexed dataset
-    dataset and each entry in formatted_dict must have identical headers
+    Merges a batch of data files into a single sorted file
     """
 
-    # formatted_dict is divided by iNaturalist source, so loop through each
-    for source in sources:
-        print("    Merging '{}' data with dataset...".format(source["Name"]))
+    # A list of open file readers
+    readers = []
+    # A list of rows to be merged
+    current_rows = []
 
-        append_data = formatted_dict[source["Abbreviation"]]
-        if len(append_data) == 0:
-            continue
+    # Read each input file
+    for file_name in input_files:
+        file = open(file_name, "r", newline="", encoding="utf-8", errors="replace")
+        reader = csv.DictReader(file)
+        readers.append((file, reader))
 
-        # Confirm header correspondence between base and append files (if dataset is non-empty)
-        if len(dataset) != 0:
-            dataset_header = dataset[0].keys()
-            append_header = append_data[0].keys()
-            if any(
-                [
-                    base_column != append_column
-                    for base_column, append_column in zip(dataset_header, append_header)
-                ]
-            ):
-                print("ERROR: base and append file headers do not match")
-                exit(1)
+        # Read the first row; input files should be sorted so the first row has the minimum sorting value
+        try:
+            row = next(reader)
+            current_rows.append((sort_key(row), row, reader))
+        except StopIteration:
+            current_rows.append((None, None, reader))
 
-        # Loop through the data to append, checking for duplicates and updates
-        for row in tqdm(append_data, desc="        Entries"):
-            # Search for current row in base data (using keys)
-            index = search_data_for_row(dataset, row)
+    # Open the output file and write the header
+    with open(
+        output_file, "w", newline="", encoding="utf-8", errors="replace"
+    ) as out_file:
+        writer = csv.DictWriter(out_file, fieldnames=fieldnames)
+        writer.writeheader()
 
-            if index == -1:
-                # The current row is new; append it to the base data
-                # (Exclude rows that don't have coordinates)
-                if row[LATITUDE] != "" and row[LONGITUDE] != "":
-                    dataset.append(row)
-            else:
-                # Fill in empty columns in the base data with values from the current row
-                for column in row:
+        # Write the row with the minimum sorting value to the output until there are no valid rows left
+        while True:
+            # Filter for non-empty rows
+            valid_rows = [
+                (key, row, i)
+                for i, (key, row, _) in enumerate(current_rows)
+                if row is not None
+            ]
+            if not valid_rows:
+                break
+
+            # Write the row with the minimum sorting value
+            min_key, min_row, min_idx = min(valid_rows)
+            writer.writerow(min_row)
+
+            # Read the next row from the file that the minimum row came from
+            try:
+                # current_rows[min_idx][2] is the reader for the file
+                next_row = next(current_rows[min_idx][2])
+                # Replace the minimum row with the next row
+                current_rows[min_idx] = (
+                    sort_key(next_row),
+                    next_row,
+                    current_rows[min_idx][2],
+                )
+            except StopIteration:
+                current_rows[min_idx] = (None, None, current_rows[min_idx][2])
+
+    # Close the readers
+    for file, _ in readers:
+        file.close()
+
+
+def merge_sorted_files(temp_files, output_file_path, sort_key, fieldnames):
+    """
+    Merges a set of pre-sorted and deduped temporary data files into a single sorted dataset
+    """
+
+    if not temp_files:
+        return
+
+    # Create a queue of files to merge, starting with the temporary files created for each data chunk
+    files_queue = deque(temp_files)
+
+    # Merge files until there is one file left (the output file)
+    while len(files_queue) > 1:
+        print("    Merge queue:" + (" X" * len(files_queue)))
+
+        # Create a batch of files to merge together from the files queue
+        batch = []
+        for _ in range(min(MERGE_SIZE, len(files_queue))):
+            batch.append(files_queue.popleft())
+
+        # If this is the final merge and all files are in the batch, merge directly into the output file
+        if not files_queue and len(batch) == len(temp_files):
+            merge_files_batch(batch, output_file_path, sort_key, fieldnames)
+        else:
+            # Create a temporary file to merge into
+            fd, merged_path = tempfile.mkstemp(suffix=".csv", dir="./temp")
+            os.close(fd)
+
+            # Merge into the temporary file
+            merge_files_batch(batch, merged_path, sort_key, fieldnames)
+
+            # Add the merged file to the queue and the listing of all temporary files
+            files_queue.append(merged_path)
+            temp_files.append(merged_path)
+
+        # Clean up files that were used in the merge
+        for file_name in batch:
+            os.remove(file_name)
+            temp_files.remove(file_name)
+
+
+def find_last_observation_number(file_path):
+    last_observation_no = None
+    last_observation_no_index = -1
+
+    # Search through the given file row-by-row for the largest observation number
+    with open(file_path, "r", newline="", encoding="utf-8", errors="replace") as file:
+        reader = csv.DictReader(file)
+        for i, row in enumerate(reader):
+            if row.get(OBSERVATION_NUMBER):
+                try:
+                    current_observation_no = int(row[OBSERVATION_NUMBER])
                     if (
-                        column in dataset_header
-                        and dataset[index][column] == ""
-                        and row[column] != ""
+                        last_observation_no is None
+                        or current_observation_no > last_observation_no
                     ):
-                        dataset[index][column] = row[column]
+                        last_observation_no = current_observation_no
+                        last_observation_no_index = i
+                except (ValueError, TypeError):
+                    continue
 
-    return dataset
+    # Return the observation number and its index
+    return (last_observation_no, last_observation_no_index)
 
 
 def store_new_observation_index(index: int):
@@ -360,58 +441,62 @@ def store_new_observation_index(index: int):
         csv_writer.writerow(labels_config)
 
 
-def index_data(dataset: list):
+def index_data(file_path):
     """
-    Sorts a dataset and adds observation numbers to unindexed rows
+    Adds observation numbers to unindexed rows of a sorted dataset file
     """
 
-    # Sort with a custom comparison function
-    dataset.sort(key=functools.cmp_to_key(compare_rows))
-
-    # Search through sorted data backwards to find the last observation number
-    last_observation_no_string = ""
-    last_observation_no_index = -1
-    for i in range(len(dataset) - 1, -1, -1):
-        if dataset[i][OBSERVATION_NUMBER] != "":
-            last_observation_no_string = dataset[i][OBSERVATION_NUMBER]
-            last_observation_no_index = i
-            break
+    # Search through sorted data to find the last observation number
+    last_observation_no, last_observation_no_index = find_last_observation_number(
+        file_path
+    )
 
     # Store the index of the first new observation number (for printing labels later in the pipeline)
     store_new_observation_index(last_observation_no_index + 1)
 
-    if last_observation_no_string != "" and last_observation_no_string.isnumeric():
-        # Convert the observation number to an integer and add one to get the next number
-        last_observation_no = int(last_observation_no_string)
+    if last_observation_no is not None:
+        # Add one to the last observation number to get the next one
         next_observation_no = last_observation_no + 1
     else:
         # No previous observation number in the base data, so start at zero (plus the year prefix)
         current_year = str(datetime.datetime.now().year)[2:]
         next_observation_no = int(current_year + "00000")
 
-    # Add observation numbers sequentially
-    for i in range(last_observation_no_index + 1, len(dataset)):
-        if not row_is_empty(dataset[i]):
-            dataset[i][OBSERVATION_NUMBER] = str(next_observation_no)
-            next_observation_no += 1
+    # Create temporary output file
+    temp_fd, temp_path = tempfile.mkstemp(suffix=".csv", dir="./temp")
+    os.close(temp_fd)
 
-    return dataset
+    # Read through the input file and fill in empty observation number fields in the output
+    try:
+        with open(
+            file_path, "r", newline="", encoding="utf-8", errors="replace"
+        ) as infile, open(
+            temp_path, "w", newline="", encoding="utf-8", errors="replace"
+        ) as outfile:
+            reader = csv.DictReader(infile)
+            fieldnames = reader.fieldnames
 
+            # Ensure there is an observation number field in the output even if it is absent in the input
+            if OBSERVATION_NUMBER not in fieldnames:
+                fieldnames = fieldnames + [OBSERVATION_NUMBER]
 
-def write_dataset(output_file_path: str, merged_dataset: list):
-    """
-    Writes a dataset to the Output File Path specified in merge_config as a CSV file
-    """
+            writer = csv.DictWriter(outfile, fieldnames=fieldnames)
+            writer.writeheader()
 
-    print("    Writing merged data to '{}'...".format(output_file_path))
+            # Fill in empty observation numbers sequentially
+            for row in reader:
+                if not row.get(OBSERVATION_NUMBER):
+                    row[OBSERVATION_NUMBER] = str(next_observation_no)
+                    next_observation_no += 1
 
-    dataset_header = merged_dataset[0].keys()
-    with open(
-        output_file_path, "w", newline="", encoding="utf-8", errors="replace"
-    ) as output_file:
-        csv_writer = csv.DictWriter(output_file, fieldnames=dataset_header)
-        csv_writer.writeheader()
-        csv_writer.writerows(merged_dataset)
+                writer.writerow(row)
+
+        # Overwrite the input file with the indexed output
+        shutil.move(temp_path, file_path)
+    except Exception as e:
+        if os.path.exists(temp_path):
+            os.remove(temp_path)
+        raise e
 
 
 def run(formatted_dict: dict):
@@ -447,20 +532,51 @@ def run(formatted_dict: dict):
 
         root.destroy()
 
-        # Read the dataset from its file into memory
-        dataset = read_dataset(input_file_path)
+        # Combine the given formatted data across all sources
+        new_data = []
+        for source in sources:
+            new_data.extend(formatted_dict[source["Abbreviation"]])
 
-        # Remove empty rows, which could cause problems later, from the dataset
-        pruned_dataset = remove_empty_rows(dataset)
+        # Read just the field names from the input file
+        with open(
+            input_file_path, newline="", encoding="utf-8", errors="replace"
+        ) as dataset_file:
+            reader = csv.DictReader(dataset_file)
+            fieldnames = reader.fieldnames
 
-        # Merge the dataset with the given formatted data
-        merged_data = merge_data(sources, pruned_dataset, formatted_dict)
+        # Create a directory for temporary files if it does not exist
+        if not os.path.exists("./temp"):
+            os.mkdir("./temp")
 
-        # Sort and index the data, storing the row of the first new entry
-        indexed_data = index_data(merged_data)
+        # A set of unique row keys that have been discovered so far
+        seen_keys = set()
+        # A list of file paths of temporary files
+        temp_files = []
 
-        # Write the merged, sorted, and indexed data into a CSV file
-        write_dataset(output_file_path, indexed_data)
+        # Read the dataset from its file in chunks; sort, deduplicate, and write each chunk to a temporary file
+        for chunk in read_csv_chunks(input_file_path):
+            # Append new data to the first chunk
+            if new_data:
+                chunk.extend(new_data)
+                new_data = None
+
+            sorted_chunk = sort_and_dedupe_chunk(chunk, seen_keys)
+            if sorted_chunk:
+                write_chunk_to_temp(sorted_chunk, fieldnames, temp_files)
+
+        # If there was no data in the input file, process the new data as a chunk
+        if new_data:
+            sorted_chunk = sort_and_dedupe_chunk(new_data, seen_keys)
+            if sorted_chunk:
+                write_chunk_to_temp(sorted_chunk, fieldnames, temp_files)
+
+        # Merge sorted temporary files in batches of MERGE_SIZE
+        merge_sorted_files(
+            temp_files, output_file_path, functools.cmp_to_key(compare_rows), fieldnames
+        )
+
+        # Index the data, storing the row of the first new entry
+        index_data(output_file_path)
 
         print("Merging Data => Done\n")
 
