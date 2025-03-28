@@ -99,21 +99,15 @@ def row_is_empty(row: dict):
 
 
 def generate_key(row):
-    # Choose identifying key fields based on if those values exist in the following sets:
-    # 1. Associated plant - Inaturalist URL, Sample ID, and Specimen ID
-    # 2. iNaturalist Alias, Sample ID, Specimen ID, Collection Day 1, Month 1, and Year 1
-    key_fields = []
-    if row.get(URL) and row.get(SAMPLE_ID) and row.get(SPECIMEN_ID):
-        key_fields = [URL, SAMPLE_ID, SPECIMEN_ID]
-    elif (
-        row.get(ALIAS)
-        and row.get(SAMPLE_ID)
-        and row.get(SPECIMEN_ID)
-        and row.get(DAY)
-        and row.get(MONTH)
-        and row.get(YEAR)
-    ):
-        key_fields = [ALIAS, SAMPLE_ID, SPECIMEN_ID, DAY, MONTH, YEAR]
+    # Which key fields to use depend on which are available:
+    # At minimum, use first name, last name, day, month, and year, sample ID, and specimen ID
+    # If available, use the observation number
+    # If available, use iNaturalist URL
+    key_fields = [FIRST_NAME, LAST_NAME, SAMPLE_ID, SPECIMEN_ID, DAY, MONTH, YEAR]
+    if row.get(OBSERVATION_NUMBER):
+        key_fields.append(OBSERVATION_NUMBER)
+    if row.get(URL):
+        key_fields.append(URL)
 
     # Convert the key fields to their values (as strings)
     key_values = [str(row.get(field, "")) for field in key_fields]
@@ -129,12 +123,8 @@ def sort_and_dedupe_chunk(chunk, seen_keys):
 
     # Loop through the chunk and add rows with observation numbers first
     for row in chunk:
-        # Skip empty rows
-        if row_is_empty(row):
-            continue
-
         # If the row has an observation number, assume it is unique, add its key to the seen_keys list, and append the row to unique_rows
-        if row[OBSERVATION_NUMBER]:
+        if row.get(OBSERVATION_NUMBER):
             # Create a unique key field for the row
             key = generate_key(row)
 
@@ -145,7 +135,7 @@ def sort_and_dedupe_chunk(chunk, seen_keys):
     # Loop through the chunk again, this time adding any other unique rows
     for row in chunk:
         # Skip empty rows
-        if row_is_empty(row):
+        if row_is_empty(row) or row.get(OBSERVATION_NUMBER):
             continue
 
         # Create a unique key field for the row
